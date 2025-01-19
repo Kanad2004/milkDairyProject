@@ -2,17 +2,32 @@
 
 const mongoose = require("mongoose");
 
-const offlineMoneySchema = new mongoose.Schema({
-  customer: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Customer",
+const offlineMoneySchema = new mongoose.Schema(
+  {
+    customer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Customer",
+    },
+    amount: {
+      type: Number,
+      required: true,
+    },
+    time: {
+      type: Date,
+      required: true,
+    },
+    subAdmin: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "SubAdmin",
+    },
+    admin: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Admin",
+    },
   },
-  amount: {
-    type: Number,
-    required: true,
-  },
-  time: {
-    type: Date,
-    required: true,
-  },
-});
+  {
+    timestamps: true,
+  }
+);
+
+module.exports = mongoose.model("OfflineMoney", offlineMoneySchema);

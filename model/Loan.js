@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const loanSchema = new mongoose.Schema(
   {
-    customer : {
+    customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Customer",
     },
@@ -12,7 +12,7 @@ const loanSchema = new mongoose.Schema(
       required: true,
     },
 
-    time: {
+    loanDate: {
       type: Date,
       required: true,
     },
