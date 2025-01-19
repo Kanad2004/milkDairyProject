@@ -12,6 +12,7 @@ const registerUser = asyncHandler(async (req,res) => {
     if([adminName , adminEmail , adminPassword].some((field) => field?.trim === "")){
         throw new ApiError(400 , "All Fields are required ")
     }
+    
 
     const admin = await Admin.findOne({adminEmail})
 
@@ -24,14 +25,14 @@ const registerUser = asyncHandler(async (req,res) => {
         adminEmail, 
         adminPassword ,
     })
-    const createdUser = await User.findById(newUser._id).select(
+    const createdUser = await Admin.findById(newAdmin._id).select(
         "-adminPassword -refreshToken"
     )
     if(!createdUser){
-        throw new ApiError(500 , "User is not registered successfully")
+        throw new ApiError(500 , "Admin is not registered successfully")
     }
 
     return res.status(201).json(
-        new ApiResponse(200, createdUser, "User Registered Successfully ! ")
+        new ApiResponse(200, createdUser, "Admin Registered Successfully ! ")
     )
 })
