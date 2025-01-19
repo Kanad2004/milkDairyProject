@@ -5,19 +5,24 @@ import {ApiResponse} from "../utils/ApiResponse.js"
 import jwt from "jsonwebtoken"
 import mongoose from "mongoose"
 
-const registerUser = asyncHandler(async (req,res) => {
+const login = asyncHandler (async (req,res) => {
 
-    const {adminName , adminEmail , adminPassword } = req.body ;
-    
-    if([adminName , adminEmail , adminPassword].some((field) => field?.trim === "")){
-        throw new ApiError(400 , "All Fields are required ")
+    const {adminEmail , adminPassword} = req.body
+
+    if(!adminEmail){
+        throw new ApiError(400 , "Email is required")
     }
-    
 
     const admin = await Admin.findOne({adminEmail})
 
-    if(admin){
-        throw new ApiError(409, "Admin with email already exists")
+    if(!admin){
+        throw new ApiError(404 , "Admin not Found")
+    }
+
+    const isPassValid = await admin.isPasswordCorrect(adminPassword)
+
+    if(!isPassValid){
+        throw new ApiError(401 , "Password is not valid")
     }
     
     const newAdmin = await Admin.create({
@@ -25,14 +30,16 @@ const registerUser = asyncHandler(async (req,res) => {
         adminEmail, 
         adminPassword ,
     })
-    const createdUser = await Admin.findById(newAdmin._id).select(
+    const createdUser = await User.findById(newUser._id).select(
         "-adminPassword -refreshToken"
     )
     if(!createdUser){
-        throw new ApiError(500 , "Admin is not registered successfully")
+        throw new ApiError(500 , "User is not registered successfully")
     }
 
     return res.status(201).json(
-        new ApiResponse(200, createdUser, "Admin Registered Successfully ! ")
+        new ApiResponse(200, createdUser, "User Registered Successfully ! ")
     )
 })
+
+export {login , logoutAdmin}
