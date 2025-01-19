@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose"
 
 const loanSchema = new mongoose.Schema(
   {
@@ -22,4 +22,4 @@ const loanSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Loan", loanSchema);
+export const Loan = mongoose.model("Loan", loanSchema);

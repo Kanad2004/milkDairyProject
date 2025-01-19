@@ -1,6 +1,7 @@
-const express = require("express");
-const adminRouter = require("./routes/adminRouter");
-const customerRouter = require("./routes/customerController");
+import express from "express"
+import adminRouter from "./routes/adminRouter.js"
+import customerRouter from "./routes/customerRouter.js";
+import connectDB from "./db/index.js";
 const app = express();
 
 //!Middleware
@@ -11,6 +12,17 @@ app.use("/", adminRouter);
 app.use("/", customerRouter);
 
 const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => {
-  console.log(`Server is running on PORT : ${PORT}`);
-});
+
+connectDB().then(() => {
+  app.on('err' , (err) => {
+                  console.log("Error : " , err) ;
+                  throw err ; 
+              })
+                  
+  app.listen(process.env.PORT || 8000, () => {
+      console.log("app is listening at the port :" , process.env.PORT) ;
+  });
+})
+.catch((err) => {
+  console.log("MONGO DB connection Failed . . . ") ;
+})

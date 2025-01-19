@@ -1,6 +1,6 @@
 //This money is the money that is given to farmers for their milk that they giving us at our dairy
 
-const mongoose = require("mongoose");
+import mongoose from "mongoose"
 
 const offlineMoneySchema = new mongoose.Schema(
   {
@@ -30,4 +30,4 @@ const offlineMoneySchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("OfflineMoney", offlineMoneySchema);
+export const OfflineMoney = mongoose.model("OfflineMoney", offlineMoneySchema);

@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose"
 
 const adminSchema = new mongoose.Schema(
   {
@@ -56,4 +56,4 @@ adminSchema.methods.generateRefToken = async function (adminPassword){
   })
 }
 
-module.exports = mongoose.model("Admin", adminSchema);
+export const Admin = mongoose.model("Admin" , adminSchema)

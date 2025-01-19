@@ -1,4 +1,4 @@
-const express = require("express");
+import express from "express"
 const { login, logoutAdmin } = require("../controllers/adminController");
 
 const adminRouter = express.Router();
@@ -9,4 +9,4 @@ adminRouter.post("/api/v1/admin/login", login);
 //!
 adminRouter.post("/api/v1/admin/logout", logoutAdmin);
 
-module.exports = adminRouter;
+export default adminRouter;

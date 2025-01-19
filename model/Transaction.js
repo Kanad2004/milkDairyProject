@@ -1,6 +1,6 @@
 //this is the money which are taking from our customers by selling our products
 
-const mongoose = require("mongoose");
+import mongoose from "mongoose"
 
 const transactionSchema = new mongoose.Schema(
   {
@@ -36,4 +36,4 @@ const transactionSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Transaction", transactionSchema);
+export const Transaction = mongoose.model("Transaction", transactionSchema);

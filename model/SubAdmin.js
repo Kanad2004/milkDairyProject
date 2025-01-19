@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose"
 
 const subAdminSchema = new mongoose.Schema(
   {
@@ -24,4 +24,4 @@ const subAdminSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("SubAdmin", subAdminSchema);
+export const SubAdmin = mongoose.model("SubAdmin", subAdminSchema);
