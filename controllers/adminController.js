@@ -41,4 +41,27 @@ const login = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, createdUser, "User Registered Successfully ! "));
 });
 
+const logoutAdmin = asyncHandler(async(req,res) => {
+    await Admin.findByIdAndUpdate(
+        req.admin._id , 
+        {
+            $set: {
+                refreshToken: null  // Use null instead of undefined to clear
+            },
+        },
+            {
+                new : true 
+            }
+        
+    )
+
+    const options = {
+        httpOnly : true ,
+        secure : true , 
+    }
+
+    return res.status(200).clearCookie("accessToken", options).clearCookie("refreshToken",options).json(new ApiResponse(200 , {} , "Admin logged out"))
+})
+
+
 export { login, logoutAdmin };
