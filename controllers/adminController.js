@@ -86,9 +86,4 @@ const logoutAdmin = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Admin logged out"));
 });
 
-
-
-
-
-
 export { login, logoutAdmin };
