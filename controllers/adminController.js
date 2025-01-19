@@ -5,33 +5,77 @@ import {ApiResponse} from "../utils/ApiResponse.js"
 import jwt from "jsonwebtoken"
 import mongoose from "mongoose"
 
-const registerUser = asyncHandler(async (req,res) => {
+const login = asyncHandler (async (req,res) => {
 
-    const {adminName , adminEmail , adminPassword } = req.body ;
-    
-    if([adminName , adminEmail , adminPassword].some((field) => field?.trim === "")){
-        throw new ApiError(400 , "All Fields are required ")
+    const {adminEmail , adminPassword} = req.body
+
+    if(!adminEmail){
+        throw new ApiError(400 , "Email is required")
     }
-
     const admin = await Admin.findOne({adminEmail})
 
-    if(admin){
-        throw new ApiError(409, "Admin with email already exists")
-    }
-    
-    const newAdmin = await Admin.create({
-        adminName,
-        adminEmail, 
-        adminPassword ,
-    })
-    const createdUser = await User.findById(newUser._id).select(
-        "-adminPassword -refreshToken"
-    )
-    if(!createdUser){
-        throw new ApiError(500 , "User is not registered successfully")
+    if(!admin){
+        throw new ApiError(404 , "Admin not Found")
     }
 
-    return res.status(201).json(
-        new ApiResponse(200, createdUser, "User Registered Successfully ! ")
+    const isPassValid = await admin.isPasswordCorrect(adminPassword)
+
+    if(!isPassValid){
+        throw new ApiError(401 , "Password is not valid")
+    }
+
+    let accessToken = "" ;
+    let refreshToken = "" ;
+
+    try{
+        accessToken = admin.generateAccessToken()
+
+        refreshToken = admin.generateRefToken()
+
+        admin.refreshToken = refreshToken
+        await admin.save({validateBeforeSave : false })
+
+    }catch(error){
+        throw new ApiError(500 , "Something went wrong while generating refresh and access token")
+    }
+
+    const loggedInAdmin = await Admin.findById(admin._id).select("-adminPassword -refreshToken")
+
+    const options = {
+        httpOnly : true ,
+        secure : true 
+    }
+
+    return res.status(200).cookie("accessToken",accessToken,options).cookie("refreshToken",refreshToken).json(
+        new ApiResponse(200 , 
+            { admin : loggedInAdmin , accessToken , refreshToken
+
+            },
+            "Admin logged in successfully"
+        )
     )
 })
+
+const logoutAdmin = asyncHandler(async(req,res) => {
+    await Admin.findByIdAndUpdate(
+        req.admin._id , 
+        {
+            $set: {
+                refreshToken: null  // Use null instead of undefined to clear
+            },
+        },
+            {
+                new : true 
+            }
+        
+    )
+
+    const options = {
+        httpOnly : true ,
+        secure : true , 
+    }
+
+    return res.status(200).clearCookie("accessToken", options).clearCookie("refreshToken",options).json(new ApiResponse(200 , {} , "Admin logged out"))
+})
+
+export {login , logoutAdmin}
