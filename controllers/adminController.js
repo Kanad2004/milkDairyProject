@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { Admin } from "../model/Admin.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
+//do some changes in options object when you are going to test the login controller as well as in frontEnd part . . . 
 const login = asyncHandler(async (req, res) => {
   const { adminEmail, adminPassword } = req.body;
 
@@ -43,15 +44,16 @@ const login = asyncHandler(async (req, res) => {
   );
 
   const options = {
-    httpOnly: true,
-    secure: true,
-  };
+    httpOnly: true, // Prevents client-side scripts from accessing the cookie
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax', 
+  }
 
   //cookies are not set in the mobile application at the user end that's why here we are sending the accesstoken and refreshtoken in the response to the user
   return res
     .status(200)
     .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken)
+    .cookie("refreshToken", refreshToken , options)
     .json(
       new ApiResponse(
         200,

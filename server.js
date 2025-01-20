@@ -2,6 +2,7 @@ import express from "express"
 import adminRouter from "./routes/adminRouter.js"
 import customerRouter from "./routes/customerRouter.js";
 import connectDB from "./db/index.js";
+import dotenv from "dotenv"
 const app = express();
 
 //!Middleware
@@ -10,6 +11,11 @@ app.use(express.json());
 //!Routes
 app.use("/", adminRouter);
 app.use("/", customerRouter);
+
+dotenv.config({
+  path : "./env"
+}) ;
+
 
 const PORT = process.env.PORT || 8000;
 
