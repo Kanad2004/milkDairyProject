@@ -23,6 +23,7 @@ const customerSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "SubAdmin",
     },
+    
   },
   {
     timestamps: true,

@@ -1,5 +1,5 @@
 import mongoose from "mongoose"
-
+import  jwt  from "jsonwebtoken";
 const adminSchema = new mongoose.Schema(
   {
     adminName: {
@@ -28,12 +28,16 @@ adminSchema.pre("save" , async function (next) {
   if(!this.isModified("adminPassword")){
       return next() ;
   }
-  this.adminPassword = await bcrypt.hash(this.adminPassword , 10)
+  // this.adminPassword = await bcrypt.hash(this.adminPassword , 10)
+  this.adminPassword = this.adminPassword
+
   next()
 })
 
 adminSchema.methods.isPasswordCorrect = async function (adminPassword){
-  return await bcrypt.compare(adminPassword,this.adminPassword);
+  // return await bcrypt.compare(adminPassword,this.adminPassword);
+
+  return this.adminPassword === adminPassword
 }
 
 adminSchema.methods.generateAccessToken = async function (adminPassword){
@@ -55,5 +59,6 @@ adminSchema.methods.generateRefToken = async function (adminPassword){
       expiresIn : process.env.REFRESH_TOKEN_EXPIRY
   })
 }
+
 
 export const Admin = mongoose.model("Admin" , adminSchema)

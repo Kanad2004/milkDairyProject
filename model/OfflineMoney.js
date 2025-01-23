@@ -2,17 +2,20 @@
 
 import mongoose from "mongoose"
 
+//kanad discuss
 const offlineMoneySchema = new mongoose.Schema(
   {
     customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Customer",
     },
+
     amount: {
       type: Number,
       required: true,
     },
-    time: {
+    //date
+    date: {
       type: Date,
       required: true,
     },

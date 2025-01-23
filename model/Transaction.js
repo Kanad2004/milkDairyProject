@@ -1,12 +1,11 @@
-//this is the money which are taking from our customers by selling our products
-
-import mongoose from "mongoose"
+import mongoose from "mongoose";
 
 const transactionSchema = new mongoose.Schema(
   {
     customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "OnlineCustomer",
+      required: true,
     },
     items: [
       {
@@ -18,7 +17,7 @@ const transactionSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    time: {
+    transactionDate: { // Renamed from 'time'
       type: Date,
       required: true,
     },

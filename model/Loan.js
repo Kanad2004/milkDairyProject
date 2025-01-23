@@ -1,5 +1,8 @@
 import mongoose from "mongoose"
 
+//add thesae attribute in Customer model 
+
+
 const loanSchema = new mongoose.Schema(
   {
     customer: {

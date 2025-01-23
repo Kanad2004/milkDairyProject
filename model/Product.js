@@ -1,5 +1,7 @@
 import mongoose from "mongoose"
 
+//Use this model to display Product rates and details
+
 const productSchema = new mongoose.Schema(
   {
     productName: {
@@ -19,6 +21,10 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
     productMassPercentage: {
+      type: Number,
+      required: true,
+    },
+    productQuantity: {
       type: Number,
       required: true,
     },

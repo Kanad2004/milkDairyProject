@@ -1,7 +1,9 @@
-const express = require("express");
-const { addCustomer } = require("../controllers/customerController");
-const customerRouter = express.Router();
+// import express from "express";
+// import { addCustomer, getAllCustomers } from "../controllers/customerController.js";
 
-customerRouter.post("/api/v1/customer/addCustomer", addCustomer);
+// const customerRouter = express.Router();
 
-export default customerRouter;
+// customerRouter.post("/api/v1/customer/addCustomer", addCustomer);
+// customerRouter.get("/api/v1/customer/all", getAllCustomers);
+
+// export default customerRouter;
