@@ -1,5 +1,6 @@
 import mongoose from "mongoose"
 
+//we have to add the status of the product which is inStock or outStock
 const productSchema = new mongoose.Schema(
   {
     productName: {
@@ -22,6 +23,10 @@ const productSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    productInstock : {
+      type : Boolean ,
+      required : true , 
+    }
   },
   {
     timestamps: true,

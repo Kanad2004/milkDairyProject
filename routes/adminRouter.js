@@ -1,12 +1,15 @@
 import express from "express"
-import { login , logoutAdmin } from "../controllers/adminController.js";
+import {
+  login,
+  logoutAdmin,
+  addAdmin
+} from "../controllers/adminController.js";
+import { authenticateUser, authorizeRoles } from "../middleware/auth.js";
 
 const adminRouter = express.Router();
 
-//!Login
-adminRouter.post("/api/v1/admin/login", login);
-
-//!
-adminRouter.post("/api/v1/admin/logout", logoutAdmin);
+adminRouter.post("/addAdmin", addAdmin);
+adminRouter.post("/login", login);
+adminRouter.post("/logout", authenticateUser, authorizeRoles['Admin'], logoutAdmin);
 
 export default adminRouter;
