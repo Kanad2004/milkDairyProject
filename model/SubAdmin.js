@@ -1,4 +1,4 @@
-import mongoose from "mongoose"
+import mongoose from "mongoose";
 
 const subAdminSchema = new mongoose.Schema(
   {
@@ -18,10 +18,54 @@ const subAdminSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admin",
     },
+    branch: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Branch",
+    },
   },
   {
     timestamps: true,
+    strict: false,
   }
 );
+
+subAdminSchema.pre("save", async function (next) {
+  if (!this.isModified("subAdminPassword")) {
+    return next();
+  }
+  this.subAdminPassword = this.subAdminPassword;
+  next();
+});
+
+subAdminSchema.methods.isPasswordCorrect = async function (subAdminPassword) {
+  console.log(this.subAdminPassword);
+  return this.subAdminPassword === subAdminPassword;
+};
+
+subAdminSchema.methods.generateAccessToken = async function (subAdminPassword) {
+  return jwt.sign(
+    {
+      _id: this._id,
+      subAdminEmail: this.subAdminEmail,
+      subAdminName: this.subAdminName,
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+    }
+  );
+};
+
+subAdminSchema.methods.generateRefToken = async function (subAdminPassword) {
+  return jwt.sign(
+    {
+      _id: this._id,
+    },
+    process.env.REFRESH_TOKEN_SECRET,
+    {
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+    }
+  );
+};
 
 export const SubAdmin = mongoose.model("SubAdmin", subAdminSchema);

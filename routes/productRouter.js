@@ -1,14 +1,64 @@
-import express from "express"
-import {displayAllProducts , displayProductByName , updateProduct , addProduct , deleteProductById} from "../controllers/productController.js"
-import { authenticateUser, authorizeRoles } from "../middleware/auth.js";
+import express from "express";
+import {
+  displayAllProducts,
+  displayProductByName,
+  updateProduct,
+  addProduct,
+  deleteProductById,
+  addQuantity,
+} from "../controllers/productController.js";
+import {
+  authenticateSubAdmin,
+  authorizeRoleSubAdmin,
+} from "../middlewares/auth.js";
 
-const productRouter = express.Router() ;
+const productRouter = express.Router();
 
-//ask that whether the subadmin is having the authority to interact with the product
-productRouter.get("/get-all-products" , authenticateUser ,  authorizeRoles(["Admin" , "SubAdmin"]) , displayAllProducts)
-productRouter.get("/get-product" , authenticateUser , authorizeRoles(["Admin" , "SubAdmin"]) ,displayProductByName)
-productRouter.patch("/:productId" , authenticateUser , authorizeRoles(["Admin" , "SubAdmin"]) ,updateProduct)
-productRouter.post("/add-product" , authenticateUser , authorizeRoles(["Admin" , "SubAdmin"]) ,addProduct)
-productRouter.delete("/:productId" , authenticateUser , authorizeRoles(["Admin" , "SubAdmin"]) ,deleteProductById)
+//!This is done
+productRouter.get(
+  "/get-all-products",
+  authenticateSubAdmin, // Authenticate SubAdmin
+  authorizeRoleSubAdmin(["subAdmin"]), // Check SubAdmin's role
+  displayAllProducts // Handle the request
+);
+//!This is done
+productRouter.get(
+  "/get-product/:productName",
+  authenticateSubAdmin, // Authenticate SubAdmin
+  authorizeRoleSubAdmin(["subAdmin"]), // Check SubAdmin's role
+  displayProductByName // Handle the request
+);
 
-export default productRouter ;
+//!This is done
+productRouter.patch(
+  "/update-product/:productId",
+  authenticateSubAdmin,
+  authorizeRoleSubAdmin(["subAdmin"]),
+  updateProduct
+);
+
+//!This is done
+productRouter.post(
+  "/add-product",
+  authenticateSubAdmin,
+  authorizeRoleSubAdmin(["subAdmin"]),
+  addProduct
+);
+
+//!This is done
+productRouter.delete(
+  "/delete-product/:productId",
+  authenticateSubAdmin,
+  authorizeRoleSubAdmin(["subAdmin"]),
+  deleteProductById
+);
+
+//!This is done
+productRouter.patch(
+  "/add-quantity/:productId",
+  authenticateSubAdmin,
+  authorizeRoleSubAdmin(["subAdmin"]),
+  addQuantity
+);
+
+export default productRouter;

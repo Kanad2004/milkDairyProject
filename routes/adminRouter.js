@@ -1,15 +1,25 @@
-import express from "express"
+import express from "express";
 import {
   login,
   logoutAdmin,
-  addAdmin
+  addAdmin,
 } from "../controllers/adminController.js";
-import { authenticateUser, authorizeRoles } from "../middleware/auth.js";
+import { authenticateAdmin, authorizeRoleAdmin } from "../middlewares/auth.js";
 
 const adminRouter = express.Router();
 
+//!This is done
 adminRouter.post("/addAdmin", addAdmin);
+
+//!This is done
 adminRouter.post("/login", login);
-adminRouter.post("/logout", authenticateUser, authorizeRoles['Admin'], logoutAdmin);
+
+//!This is done
+adminRouter.post(
+  "/logout",
+  authenticateAdmin,
+  authorizeRoleAdmin(["Admin"]),
+  logoutAdmin
+);
 
 export default adminRouter;

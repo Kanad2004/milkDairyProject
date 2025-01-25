@@ -1,8 +1,8 @@
-import mongoose from "mongoose"
+import mongoose from "mongoose";
 
-const customerSchema = new mongoose.Schema(
+const farmerSchema = new mongoose.Schema(
   {
-    customerName: {
+    farmerName: {
       type: String,
       required: true,
     },
@@ -23,10 +23,26 @@ const customerSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "SubAdmin",
     },
+    amount: {
+      type: Number,
+      default: 0,
+    },
+    loan: [
+      {
+        loanDate: {
+          type: Date,
+          required: true,
+        },
+        loanAmount: {
+          type: Number,
+          required: true,
+        },
+      },
+    ],
   },
   {
     timestamps: true,
   }
 );
 
-export const Customer = mongoose.model("Customer", customerSchema);
+export const Farmer = mongoose.model("Farmer", farmerSchema);

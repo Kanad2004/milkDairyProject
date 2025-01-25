@@ -1,7 +1,27 @@
-import express from "express"
-import { authenticateUser, authorizeRoles } from "../middleware/auth.js";
-import {createBranch,getBranches,} from "../controllers/branchController.js"
+import express from "express";
+import {
+  authenticateAdmin,
+  authenticateSubAdmin,
+  authorizeRoleAdmin,
+  authorizeRoleSubAdmin,
+} from "../middlewares/auth.js";
+import { createBranch, getBranches } from "../controllers/branchController.js";
 const branchRouter = express.Router();
 
-branchRouter.post("/create-branch", authenticateUser , authorizeRoles("Admin"),createBranch);
-branchRouter.get("/get-branches", authenticateUser , authorizeRoles("Admin"),getBranches);
+//!This is done
+branchRouter.post(
+  "/create-branch",
+  authenticateAdmin,
+  authorizeRoleAdmin(["Admin"]),
+  createBranch
+);
+
+//!This is done
+branchRouter.get(
+  "/get-branches",
+  authenticateAdmin,
+  authorizeRoleAdmin(["Admin"]),
+  getBranches
+);
+
+export default branchRouter;
