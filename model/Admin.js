@@ -1,5 +1,5 @@
 import mongoose from "mongoose"
-import  jwt  from "jsonwebtoken";
+
 const adminSchema = new mongoose.Schema(
   {
     adminName: {
@@ -14,42 +14,41 @@ const adminSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    refreshToken : {
-      type : String
-  }
-    
+    refreshToken: {
+      type: String,
+    },
   },
   {
     timestamps: true,
+    strict: false,
   }
 );
 
-adminSchema.pre("save" , async function (next) {
-  if(!this.isModified("adminPassword")){
-      return next() ;
+adminSchema.pre("save", async function (next) {
+  if (!this.isModified("adminPassword")) {
+    return next();
   }
-  // this.adminPassword = await bcrypt.hash(this.adminPassword , 10)
-  this.adminPassword = this.adminPassword
-
+  this.adminPassword = await bcrypt.hash(this.adminPassword , 10)
   next()
 })
 
 adminSchema.methods.isPasswordCorrect = async function (adminPassword){
-  // return await bcrypt.compare(adminPassword,this.adminPassword);
-
-  return this.adminPassword === adminPassword
+  return await bcrypt.compare(adminPassword,this.adminPassword);
 }
 
-adminSchema.methods.generateAccessToken = async function (adminPassword){
-  return jwt.sign({
-      _id : this._id,
-      adminEmail:this.adminEmail ,
-      adminName : this.adminName ,
-  },
-  process.env.ACCESS_TOKEN_SECRET , {
-      expiresIn : process.env.ACCESS_TOKEN_EXPIRY
-  })
-}
+adminSchema.methods.generateAccessToken = async function (adminPassword) {
+  return jwt.sign(
+    {
+      _id: this._id,
+      adminEmail: this.adminEmail,
+      adminName: this.adminName,
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+    }
+  );
+};
 
 adminSchema.methods.generateRefToken = async function (adminPassword){
   return jwt.sign({
@@ -60,5 +59,4 @@ adminSchema.methods.generateRefToken = async function (adminPassword){
   })
 }
 
-
-export const Admin = mongoose.model("Admin" , adminSchema)
+export const Admin = mongoose.model("Admin", adminSchema);

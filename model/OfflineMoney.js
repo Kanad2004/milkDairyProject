@@ -2,7 +2,6 @@
 
 import mongoose from "mongoose"
 
-//kanad discuss
 const offlineMoneySchema = new mongoose.Schema(
   {
     customer: {
