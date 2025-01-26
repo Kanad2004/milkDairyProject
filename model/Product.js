@@ -28,6 +28,14 @@ const productSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    admin: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Admin",
+    },
+    subAdmin: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "SubAdmin",
+    },
   },
   {
     timestamps: true,

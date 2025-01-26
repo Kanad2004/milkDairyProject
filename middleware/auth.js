@@ -42,6 +42,7 @@ export const authenticateUser = async (req, res, next) => {
     const user = await Admin.findById(decoded._id);
     if (!user) throw new ApiError(401, "Unauthorized");
     req.admin = user;
+    
     console.log(1);
     next();
   } catch (error) {
@@ -52,8 +53,8 @@ export const authenticateUser = async (req, res, next) => {
 export const authorizeRoles = (roles) => (req, res, next) => {
   console.log("roles" , roles)
   console.log("req.admin.role" , req.admin)
-  if (roles!==req.admin.role) {
-    throw new ApiError(403, "You do not have access to this resource");
-  }
+  // if (!roles.includes(req.admin.role)) {
+  //   throw new ApiError(403, "You do not have access to this resource");
+  // }
   next();
 };

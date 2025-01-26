@@ -37,13 +37,13 @@ subAdminRouter.post("/api/v1/subadmin/logout", authenticateUser, subAdminLogout)
 
 // Admin-only routes
 subAdminRouter.get(
-  "/api/v1/subadmins",
+  "/subadmins",
   authenticateUser,
-  authorizeRoles("Admin"),
+  authorizeRoles(["Admin"]),
   getAllSubAdmins
 );
 subAdminRouter.get(
-  "/api/v1/subadmin/:subAdminId",
+  "/subadmin/:subAdminId",
   authenticateUser,
   authorizeRoles("Admin"),
   getSubAdminById
