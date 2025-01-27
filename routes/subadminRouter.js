@@ -49,7 +49,7 @@ subadminRouter.delete(
 );
 
 //!This is done
-subadminRouter.post("/login", subAdminLogin);
+subadminRouter.post("/subAdmin/login", subAdminLogin);
 
 subadminRouter.post(
   "/logout",

@@ -1,15 +1,22 @@
 import express from "express"
 import adminRouter from "./routes/adminRouter.js"
-import customerRouter from "./routes/customerRouter.js";
+import subAdminRouter from "./routes/subAdminRouter.js"
+// import customerRouter from "./routes/customerRouter.js";
 import connectDB from "./db/index.js";
 const app = express();
+import dotenv from "dotenv"
+import loanRouter from "./routes/loanRouter.js";
 
+dotenv.config({ path: "./.env" });
 //!Middleware
 app.use(express.json());
 
 //!Routes
-app.use("/", adminRouter);
-app.use("/", customerRouter);
+app.use("/api/v1", adminRouter);
+app.use("/api/v1", subAdminRouter);
+app.use("/api/v1", loanRouter);
+
+// app.use("/", customerRouter);
 
 const PORT = process.env.PORT || 8000;
 

@@ -5,9 +5,9 @@ import { Admin } from "../model/Admin.js";
 
 // Middleware for authenticating the subadmin
 export const authenticateSubAdmin = async (req, res, next) => {
+  console.log("request.cookies:" , req.cookies) ;
   try {
-    const token =
-      req.cookies.accessToken || req.headers.authorization?.split(" ")[1];
+    const token = req.cookies.accessToken || req.headers.authorization?.split(" ")[1];
     console.log("AuthenticateSubAdmin: Token received:", token);
 
     if (!token) {
