@@ -39,7 +39,7 @@ const subAdminLogin = asyncHandler(async (req, res) => {
       process.env.REFRESH_TOKEN_SECRET,
       { expiresIn: process.env.REFRESH_TOKEN_EXPIRY }
     );
-
+    console.log(refreshToken);
     subAdmin.refreshToken = refreshToken;
     await subAdmin.save({ validateBeforeSave: false });
 

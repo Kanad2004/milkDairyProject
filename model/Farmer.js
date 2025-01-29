@@ -23,10 +23,39 @@ const farmerSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "SubAdmin",
     },
-    amount: {
+    // amount: {
+    //   type: Number,
+    //   default: 0,
+    // },
+    totalLoan: {
       type: Number,
       default: 0,
     },
+    totalLoanPaidBack: {
+      type: Number,
+      default: 0,
+    },
+    totalLoanRemaining: {
+      type: Number,
+      default: 0,
+    },
+
+    transaction: [
+      {
+        transactionDate: {
+          type: Date,
+          // required: true,
+        },
+        transactionAmount: {
+          type: Number,
+          // required: true,
+        },
+        milkQuantity: {
+          type: Number,
+          // required: true,
+        },
+      },
+    ],
     loan: [
       {
         loanDate: {
