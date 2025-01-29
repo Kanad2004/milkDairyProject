@@ -25,6 +25,7 @@ app.use("/api/v1/subadmin", subAdminRouter); // Prefixing all subadmin routes wi
 app.use("/api/v1/branch", branchRouter);
 app.use("/api/v1/customer", farmerRouter);
 app.use("/api/v1/product", productRouter);
+app.use("/api/v1/farmer", farmerRouter);
 
 // Connect to MongoDB and start the server
 connectDB()
