@@ -6,16 +6,24 @@ const subAdminSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    subAdminEmail: {
-      type: String,
-      required: true,
-    },
     subAdminPassword: {
       type: String,
       required: true,
     },
     refreshToken: {
       type: String,
+    },
+    profilePicture: {
+      type: String,
+    },
+    mobileNumber: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    address: {
+      type: String,
+      required: true,
     },
     admin: {
       type: mongoose.Schema.Types.ObjectId,
