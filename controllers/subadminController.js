@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { SubAdmin } from "../model/SubAdmin.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import {Branch} from "../model/Branch.js"
 
 // SubAdmin Login
 const subAdminLogin = asyncHandler(async (req, res) => {
@@ -119,7 +120,7 @@ const addSubAdmin = async (req, res) => {
         subAdminEmail,
         subAdminPassword, // Use hashedPassword here if hashing
         branch: branchId,
-        role: "subAdmin"
+        role: "SubAdmin"
       });
   
       // Save the subadmin to the database

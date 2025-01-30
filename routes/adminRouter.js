@@ -4,12 +4,12 @@ import {
   logoutAdmin,
   addAdmin
 } from "../controllers/adminController.js";
-import { authenticateUser, authorizeRoles } from "../middleware/auth.js";
+import { authenticateAdmin, authorizeRoleAdmin } from "../middleware/auth.js";
 
 const adminRouter = express.Router();
 
 adminRouter.post("/addAdmin", addAdmin);
 adminRouter.post("/login", login);
-adminRouter.post("/logout", authenticateUser, authorizeRoles['Admin'], logoutAdmin);
+adminRouter.post("/logout", authenticateAdmin, authorizeRoleAdmin(['Admin']), logoutAdmin);
 
 export default adminRouter;

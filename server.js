@@ -4,6 +4,8 @@ import subAdminRouter from "./routes/subAdminRouter.js";
 import branchRouter from "./routes/branchRouter.js"
 import customerRouter from "./routes/customerRouter.js"
 import productRouter from "./routes/productRouter.js"
+import newofferRouter from "./routes/newofferRouter.js";
+import farmerRouter from "./routes/farmerRouter.js"
 import connectDB from "./db/index.js";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv"
@@ -24,7 +26,8 @@ app.use("/api/v1/subadmin", subAdminRouter); // Prefixing all subadmin routes wi
 app.use("/api/v1/branch" , branchRouter);
 app.use("/api/v1/customer" , customerRouter) ;
 app.use("/api/v1/product" , productRouter);
-
+app.use("/api/v1/newoffer" , newofferRouter);
+app.use("/api/v1/farmer" , farmerRouter)
 // Connect to MongoDB and start the server
 connectDB()
   .then(() => {

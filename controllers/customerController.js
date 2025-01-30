@@ -7,9 +7,10 @@ import {Customer} from "../model/Customer.js";
 const addCustomer = asyncHandler(async (req, res) => {
     const {customerName , mobileNumber , address} = req.body ;
     const admin = req.admin ; 
-    if([customerName , mobileNumber , address].some((field) => field?.trim === "")){
-        throw new ApiError(400 , "All Fields are required ")
-    }
+    if (!customerName?.trim() || !mobileNumber || !address?.trim()) {
+        throw new ApiError(400, "All fields are required");
+      }
+      
 
     const customer = await Customer.findOne({mobileNumber})
 

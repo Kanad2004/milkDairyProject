@@ -1,7 +1,6 @@
 //This money is the money that is given to farmers for their milk that they giving us at our dairy
 
 import mongoose from "mongoose"
-
 const offlineMoneySchema = new mongoose.Schema(
   {
     customer: {
