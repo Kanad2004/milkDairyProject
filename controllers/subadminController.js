@@ -92,7 +92,8 @@ const subAdminLogout = asyncHandler(async (req, res) => {
 
 const addSubAdmin = async (req, res) => {
   try {
-    const { subAdminName, subAdminEmail, subAdminPassword, branch } = req.body;
+    const { subAdminName, subAdminEmail, subAdminPassword, branchId } =
+      req.body;
 
     // Check if the subadmin already exists
     const subAdminExists = await SubAdmin.findOne({ subAdminEmail });
@@ -102,16 +103,19 @@ const addSubAdmin = async (req, res) => {
 
     // Find or create the branch
     const existingBranch = await Branch.findOne({
-      branchName: branch.branchName,
-      location: branch.location,
+      branchId: branchId,
     });
 
-    let branchId;
-    if (existingBranch) {
-      branchId = existingBranch._id;
-    } else {
-      const newBranch = await Branch.create(branch);
-      branchId = newBranch._id;
+    // let branchId;
+    // if (existingBranch) {
+    //   branchId = existingBranch._id;
+    // } else {
+    //   const newBranch = await Branch.create(branch);
+    //   branchId = newBranch._id;
+    // }
+
+    if (!existingBranch) {
+      return res.status(400).json({ message: "Branch does not exist!" });
     }
 
     // Hash the password (recommended for security)
@@ -122,7 +126,7 @@ const addSubAdmin = async (req, res) => {
       subAdminName,
       subAdminEmail,
       subAdminPassword, // Use hashedPassword here if hashing
-      branch: branchId,
+      branch: existingBranch._id,
       role: "subAdmin",
     });
 
