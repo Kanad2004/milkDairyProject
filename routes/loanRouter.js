@@ -1,6 +1,6 @@
 import express from 'express';
 import { createLoan, getAllLoans, getLoanById, updateLoan } from '../controllers/loanController.js';
-import {authenticateSubAdmin, authorizeRoleSubAdmin} from '../middlewares/auth.js';
+import {authenticateSubAdmin,authenticateAdmin, authorizeRoleAdmin, authorizeRoleSubAdmin} from '../middlewares/auth.js';
 
 const loanRouter = express.Router();
 
@@ -13,7 +13,12 @@ loanRouter.put('/update-loan/:loanId',authenticateSubAdmin, authorizeRoleSubAdmi
 
 
 //Routes for Admin
-loanRouter.get('/get-all-loans',authenticateSubAdmin, authorizeRoleSubAdmin(['Admin']),  getAllLoans);
-loanRouter.get('/get-loan/:loanId', authenticateSubAdmin, authorizeRoleSubAdmin(['Admin']), getLoanById);
+loanRouter.get('/get-all-loans',authenticateAdmin, authorizeRoleAdmin(['Admin']),  getAllLoans);
+loanRouter.get('/get-loan/:loanId', authenticateAdmin, authorizeRoleAdmin(['Admin']), getLoanById);
+// Route to generate loan report for all farmers
+router.get("/loans/report",authenticateAdmin, authorizeRoleAdmin(['Admin']), generateLoanReport);
+
+// Route to generate loan report by farmer ID
+router.get("/loans/report/:farmerId",authenticateAdmin, authorizeRoleAdmin(['Admin']), generateLoanReportByFarmerId);
 
 export default loanRouter;
