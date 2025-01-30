@@ -110,9 +110,9 @@ export const generateLoanReport = asyncHandler(async (req, res) => {
         { header: "Total Loan", key: "totalLoan", width: 20 },
         { header: "Total Loan Paid Back", key: "totalLoanPaidBack", width: 20 },
         { header: "Total Loan Remaining", key: "totalLoanRemaining", width: 20 },
-        { header: "Loan ID", key: "loanId", width: 20 },
-        { header: "Loan Date", key: "loanDate", width: 20 },
-        { header: "Loan Amount", key: "loanAmount", width: 20 },
+        // { header: "Loan ID", key: "loanId", width: 20 },
+        // { header: "Loan Date", key: "loanDate", width: 20 },
+        // { header: "Loan Amount", key: "loanAmount", width: 20 },
     ];
 
     // Add rows for each loan
@@ -126,9 +126,9 @@ export const generateLoanReport = asyncHandler(async (req, res) => {
                 totalLoan: farmer.totalLoan,
                 totalLoanPaidBack: farmer.totalLoanPaidBack,
                 totalLoanRemaining: farmer.totalLoanRemaining,
-                loanId: loan._id,
-                loanDate: loan.loanDate,
-                loanAmount: loan.loanAmount,
+                // loanId: loan._id,
+                // loanDate: loan.loanDate,
+                // loanAmount: loan.loanAmount,
             });
         });
     });
@@ -170,9 +170,9 @@ export const generateLoanReportByFarmerId = asyncHandler(async (req, res) => {
         { header: "Total Loan", key: "totalLoan", width: 20 },
         { header: "Total Loan Paid Back", key: "totalLoanPaidBack", width: 20 },
         { header: "Total Loan Remaining", key: "totalLoanRemaining", width: 20 },
-        { header: "Loan ID", key: "loanId", width: 20 },
-        { header: "Loan Date", key: "loanDate", width: 20 },
-        { header: "Loan Amount", key: "loanAmount", width: 20 },
+        // { header: "Loan ID", key: "loanId", width: 20 },
+        // { header: "Loan Date", key: "loanDate", width: 20 },
+        // { header: "Loan Amount", key: "loanAmount", width: 20 },
     ];
 
     // Add rows for each loan of the specified farmer
@@ -185,9 +185,9 @@ export const generateLoanReportByFarmerId = asyncHandler(async (req, res) => {
             totalLoan: farmer.totalLoan,
             totalLoanPaidBack: farmer.totalLoanPaidBack,
             totalLoanRemaining: farmer.totalLoanRemaining,
-            loanId: loan._id,
-            loanDate: loan.loanDate,
-            loanAmount: loan.loanAmount,
+            // loanId: loan._id,
+            // loanDate: loan.loanDate,
+            // loanAmount: loan.loanAmount,
         });
     });
 
