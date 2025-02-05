@@ -6,6 +6,8 @@ import connectDB from "./db/index.js";
 const app = express();
 import dotenv from "dotenv"
 import loanRouter from "./routes/loanRouter.js";
+import farmerReportRoutes from "./routes/farmerTransactionRouter.js";
+import trasactionRouter from "./routes/transactionRouter.js";
 
 dotenv.config({ path: "./.env" });
 //!Middleware
@@ -15,6 +17,8 @@ app.use(express.json());
 app.use("/api/v1", adminRouter);
 app.use("/api/v1", subAdminRouter);
 app.use("/api/v1", loanRouter);
+app.use("/api/v1", farmerReportRoutes);
+app.use("/api/v1", trasactionRouter);
 
 // app.use("/", customerRouter);
 

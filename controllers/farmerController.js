@@ -36,3 +36,4 @@ const addFarmer = asyncHandler(async (req, res) => {
 const getAllfarmers = asyncHandler(async (req, res) => {});
 
 export { addFarmer, getAllfarmers };
+
