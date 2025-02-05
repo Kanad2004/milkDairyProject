@@ -33,4 +33,16 @@ const getBranches = async (req, res) => {
     .send(new ApiResponse(200, branches, "all branched getched successfully"));
 };
 
-export { createBranch, getBranches };
+//!This is done
+const getBranchById = async (req, res) => {
+  const { branchId } = req.params;
+  const branch = await Branch.findOne({ branchId });
+  if (!branch) {
+    return res.status(400).send(new ApiResponse(400, {}, "Branch not found"));
+  }
+  return res
+    .status(200)
+    .send(new ApiResponse(200, branch, "Branch found successfully"));
+};
+
+export { createBranch, getBranches, getBranchById };

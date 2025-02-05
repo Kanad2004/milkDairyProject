@@ -8,16 +8,15 @@ import { Branch } from "../model/Branch.js";
 //do some changes in options object when you are going to test the login controller as well as in frontEnd part . . .
 //cookies are not set in the mobile application at the user end that's why here we are sending the accesstoken and refreshtoken in the response to the user
 
-
 //!This is done
 const login = asyncHandler(async (req, res) => {
-  const { adminEmail, adminPassword } = req.body;
+  const { adminMobileNumber, adminPassword } = req.body;
 
-  if (!adminEmail || !adminPassword) {
-    throw new ApiError(400, "Email and Password are required");
+  if (!adminMobileNumber || !adminPassword) {
+    throw new ApiError(400, "Mobile Number and Password are required");
   }
 
-  const admin = await Admin.findOne({ adminEmail });
+  const admin = await Admin.findOne({ adminMobileNumber });
 
   if (!admin) {
     throw new ApiError(404, "Admin not found");
@@ -93,10 +92,10 @@ const logoutAdmin = asyncHandler(async (req, res) => {
 //!This is done
 const addAdmin = asyncHandler(async (req, res) => {
   try {
-    const { adminName, adminEmail, adminPassword } = req.body;
+    const { adminName, adminMobileNumber, adminPassword } = req.body;
 
     // Check if the admin already exists
-    const adminExists = await Admin.findOne({ adminEmail });
+    const adminExists = await Admin.findOne({ adminMobileNumber });
     if (adminExists) {
       return res.status(400).json({ message: "Admin already exists!" });
     }
@@ -104,7 +103,7 @@ const addAdmin = asyncHandler(async (req, res) => {
     // Create the new admin
     const newAdmin = new Admin({
       adminName,
-      adminEmail,
+      adminMobileNumber,
       adminPassword,
       role: "Admin", // Set the role as admin
     });

@@ -57,7 +57,7 @@ subAdminSchema.methods.generateAccessToken = async function (subAdminPassword) {
   return jwt.sign(
     {
       _id: this._id,
-      subAdminEmail: this.subAdminEmail,
+      mobileNumber: this.mobileNumber,
       subAdminName: this.subAdminName,
     },
     process.env.ACCESS_TOKEN_SECRET,

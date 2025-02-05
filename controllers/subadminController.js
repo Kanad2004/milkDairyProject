@@ -7,13 +7,13 @@ import { Branch } from "../model/Branch.js";
 
 // SubAdmin Login
 const subAdminLogin = asyncHandler(async (req, res) => {
-  const { subAdminEmail, subAdminPassword } = req.body;
+  const { mobileNumber, subAdminPassword } = req.body;
 
-  if (!subAdminEmail || !subAdminPassword) {
-    throw new ApiError(400, "Email and Password are required");
+  if (!mobileNumber || !subAdminPassword) {
+    throw new ApiError(400, "Mobile Number and Password are required");
   }
 
-  const subAdmin = await SubAdmin.findOne({ subAdminEmail });
+  const subAdmin = await SubAdmin.findOne({ mobileNumber });
 
   if (!subAdmin) {
     throw new ApiError(404, "SubAdmin not found");
@@ -57,7 +57,7 @@ const subAdminLogin = asyncHandler(async (req, res) => {
         new ApiResponse(
           200,
           {
-            subAdmin: { id: subAdmin._id, email: subAdmin.subAdminEmail },
+            subAdmin: { id: subAdmin._id, mobileNumber: subAdmin.mobileNumber },
             accessToken,
           },
           "SubAdmin logged in successfully"
@@ -69,7 +69,7 @@ const subAdminLogin = asyncHandler(async (req, res) => {
 });
 // SubAdmin Logout
 const subAdminLogout = asyncHandler(async (req, res) => {
-  const { subAdmin } = req;
+  const subAdmin = req.subAdmin;
 
   if (!subAdmin) {
     throw new ApiError(401, "Unauthorized");
@@ -92,11 +92,17 @@ const subAdminLogout = asyncHandler(async (req, res) => {
 
 const addSubAdmin = async (req, res) => {
   try {
-    const { subAdminName, subAdminEmail, subAdminPassword, branchId } =
-      req.body;
+    const {
+      subAdminName,
+      mobileNumber,
+      profilePicture,
+      address,
+      subAdminPassword,
+      branchId,
+    } = req.body;
 
     // Check if the subadmin already exists
-    const subAdminExists = await SubAdmin.findOne({ subAdminEmail });
+    const subAdminExists = await SubAdmin.findOne({ mobileNumber });
     if (subAdminExists) {
       return res.status(400).json({ message: "SubAdmin already exists!" });
     }
@@ -124,7 +130,9 @@ const addSubAdmin = async (req, res) => {
     // Create the new subadmin
     const newSubAdmin = new SubAdmin({
       subAdminName,
-      subAdminEmail,
+      mobileNumber,
+      profilePicture,
+      address,
       subAdminPassword, // Use hashedPassword here if hashing
       branch: existingBranch._id,
       role: "subAdmin",
