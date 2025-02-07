@@ -10,6 +10,7 @@ import fs from "fs";
 const addFarmer = asyncHandler(async (req, res) => {
   const { farmerName, mobileNumber, address } = req.body;
   const subAdmin = req.subAdmin._id;
+<<<<<<< HEAD
   if (!farmerName?.trim() || !mobileNumber || !address?.trim()) {
     throw new ApiError(400, "All fields are required");
   }
@@ -18,6 +19,13 @@ const addFarmer = asyncHandler(async (req, res) => {
   const farmer = await Farmer.findOne({ mobileNumber });
   
   
+=======
+  if ([farmerName, mobileNumber, address].some((field) => field?.trim === "")) {
+    throw new ApiError(400, "All Fields are required ");
+  }
+
+  const farmer = await Farmer.findOne({ mobileNumber });
+>>>>>>> 14a5353bd279100d6e5c27cb46140631f278c929
   console.log(farmer);
 
   if (farmer !== null) {
@@ -177,7 +185,11 @@ const exportFarmerDetail = async (req, res) => {
         console.error("Error sending file:", err);
         res.status(500).send("Error sending file.");
       } else {
+<<<<<<< HEAD
         fs.unlinkSync(filePath); // Delete file only after response is sent
+=======
+        // fs.unlinkSync(filePath); // Delete file only after response is sent
+>>>>>>> 14a5353bd279100d6e5c27cb46140631f278c929
       }
     });
   } catch (error) {
@@ -188,4 +200,8 @@ const exportFarmerDetail = async (req, res) => {
   }
 };
 
+<<<<<<< HEAD
 export { addFarmer, getAllfarmers, addMilk, deleteFarmer, exportFarmerDetail };
+=======
+export { addFarmer, getAllfarmers, addMilk, deleteFarmer, exportFarmerDetail };
+>>>>>>> 14a5353bd279100d6e5c27cb46140631f278c929

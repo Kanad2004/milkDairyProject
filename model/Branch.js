@@ -1,16 +1,12 @@
 import mongoose from "mongoose";
 
 const branchSchema = new mongoose.Schema(
-    {
-      branchName: {
-        type: String,
-        required: true,
-      },
-      location: {
-        type: String,
-        required: true,
-      },
+  {
+    branchId: {
+      type: Number,
+      required: true,
     },
+<<<<<<< HEAD
     {
       timestamps: true,
     }
@@ -35,3 +31,20 @@ const branchSchema = new mongoose.Schema(
   //   },
   // ],
   
+=======
+    branchAddress: {
+      type: String,
+      required: true,
+    },
+    location: {
+      type: String,
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+export const Branch = mongoose.model("Branch", branchSchema);
+>>>>>>> 14a5353bd279100d6e5c27cb46140631f278c929
