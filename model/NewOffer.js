@@ -7,13 +7,14 @@ const newOfferSchema = new mongoose.Schema(
       required: true,
     },
     title: {
-      type: Number,
+      type: String,
       required: true,
     },
     description: {
       type: String,
       required: true,
     },
+    
   },
   {
     timestamps: true,
@@ -21,3 +22,4 @@ const newOfferSchema = new mongoose.Schema(
 );
 
 export const NewOffer = mongoose.model("NewOffer", newOfferSchema);
+

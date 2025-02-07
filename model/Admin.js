@@ -6,9 +6,10 @@ const adminSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    adminEmail: {
+    adminMobileNumber: {
       type: String,
       required: true,
+      unique : true ,
     },
     adminPassword: {
       type: String,
@@ -36,10 +37,10 @@ adminSchema.methods.isPasswordCorrect = async function (adminPassword){
   return await bcrypt.compare(adminPassword,this.adminPassword);
 }
 
-adminSchema.methods.generateAccessToken = async function (adminPassword){
+adminSchema.methods.generateAccessToken = async function (){
   return jwt.sign({
       _id : this._id,
-      adminEmail:this.adminEmail ,
+      adminMobileNumber:this.adminMobileNumber ,
       adminName : this.adminName ,
   },
   process.env.ACCESS_TOKEN_SECRET , {
@@ -47,7 +48,7 @@ adminSchema.methods.generateAccessToken = async function (adminPassword){
   })
 }
 
-adminSchema.methods.generateRefToken = async function (adminPassword){
+adminSchema.methods.generateRefToken = async function (){
   return jwt.sign({
       _id : this._id,
   },
@@ -55,5 +56,5 @@ adminSchema.methods.generateRefToken = async function (adminPassword){
       expiresIn : process.env.REFRESH_TOKEN_EXPIRY
   })
 }
-
+adminSchema.index({ adminMobileNumber: 1 });
 export const Admin = mongoose.model("Admin" , adminSchema)

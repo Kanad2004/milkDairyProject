@@ -14,10 +14,11 @@ const client = new twilio(accountSid, authToken);
 const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
 
 let verificationCode ;
-
+// 4WCLHYZW1NQ6YUAYJ1PYQ8AY
 const sendSms = asyncHandler(async(err, req,res,next) => {
     const phoneNumber = req.body.phoneNumber;
-
+    const name = req.body.name ;
+    const address = req.body.address ;
   client.verify.services(verifyServiceSid)
     .verifications
     .create({

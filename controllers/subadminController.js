@@ -89,6 +89,7 @@ const subAdminLogout = asyncHandler(async (req, res) => {
 
 const addSubAdmin = async (req, res) => {
     try {
+      
       const { subAdminName, subAdminEmail, subAdminPassword, branch } = req.body;
   
       // Check if the subadmin already exists

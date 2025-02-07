@@ -6,6 +6,7 @@ import customerRouter from "./routes/customerRouter.js"
 import productRouter from "./routes/productRouter.js"
 import newofferRouter from "./routes/newofferRouter.js";
 import farmerRouter from "./routes/farmerRouter.js"
+import onlineCustomerRouter from "./routes/onlinecustomerRouter.js";
 import connectDB from "./db/index.js";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv"
@@ -27,7 +28,8 @@ app.use("/api/v1/branch" , branchRouter);
 app.use("/api/v1/customer" , customerRouter) ;
 app.use("/api/v1/product" , productRouter);
 app.use("/api/v1/newoffer" , newofferRouter);
-app.use("/api/v1/farmer" , farmerRouter)
+app.use("/api/v1/farmer" , farmerRouter);
+app.use("/api/v1/online-customer" , onlineCustomerRouter);
 // Connect to MongoDB and start the server
 connectDB()
   .then(() => {

@@ -131,6 +131,15 @@ export const updateOfferImage = asyncHandler(async (req,res) => {
   )
 })
 
+//get all offers . . .
+export const getAllOffers = asyncHandler(async (req,res) => {
+  const offers = await NewOffer.find() ;
+
+  if(!offers){
+    throw new ApiError(404 , "offers are not available")
+  }
+  return res.status(200).send(new ApiResponse(200, offers, "Offers found"));
+})
 
 
 
