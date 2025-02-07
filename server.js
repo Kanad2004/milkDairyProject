@@ -8,16 +8,29 @@ import connectDB from "./db/index.js";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import farmerRouter from "./routes/farmerRouter.js";
+import cors from "cors";
 
 const app = express();
+app.use(
+  cors({
+    // origin:process.env.CORS_ORIGIN,
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static("public"));
+app.use(cookieParser());
+// app.use((req, res, next) => {
+//     res.header('Access-Control-Allow-Credentials', 'true');
+//     next();
+// });
 
 dotenv.config({
-  path: "./env",
+  path: "./.env",
 });
-
-app.use(cookieParser());
-// Middleware for parsing JSON data
-app.use(express.json());
 
 // Routes
 app.use("/api/v1/admin", adminRouter); // Prefixing all admin routes with /admin

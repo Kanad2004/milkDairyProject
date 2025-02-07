@@ -45,4 +45,38 @@ const getBranchById = async (req, res) => {
     .send(new ApiResponse(200, branch, "Branch found successfully"));
 };
 
-export { createBranch, getBranches, getBranchById };
+//!This is done
+const updateBranchById = async (req, res) => {
+  const { branchId } = req.params;
+  const { branchAddress, location } = req.body;
+  const branch = await Branch.findOneAndUpdate(
+    { branchId },
+    { branchAddress, location },
+    { new: true }
+  );
+  if (!branch) {
+    return res.status(400).send(new ApiResponse(400, {}, "Branch not found"));
+  }
+  return res
+    .status(200)
+    .send(new ApiResponse(200, branch, "Branch updated successfully"));
+};
+
+const deleteBranchById = async (req, res) => {
+  const { branchId } = req.params;
+  const branch = await Branch.findOneAndDelete({ branchId });
+  if (!branch) {
+    return res.status(400).send(new ApiResponse(400, {}, "Branch not found"));
+  }
+  return res
+    .status(200)
+    .send(new ApiResponse(200, branch, "Branch deleted successfully"));
+};
+
+export {
+  createBranch,
+  getBranches,
+  getBranchById,
+  updateBranchById,
+  deleteBranchById,
+};
