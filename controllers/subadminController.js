@@ -92,14 +92,14 @@ const subAdminLogout = asyncHandler(async (req, res) => {
 
 const addSubAdmin = async (req, res) => {
   try {
-    const {
-      subAdminName,
-      mobileNumber,
-      profilePicture,
-      address,
-      subAdminPassword,
-      branchId,
-    } = req.body;
+    const { subAdminName, mobileNumber, address, subAdminPassword, branchId } =
+      req.body;
+
+    const profilePicture = req?.file?.path;
+
+    if (!profilePicture) {
+      throw new ApiError(400, "Profile Img is missing");
+    }
 
     // Check if the subadmin already exists
     const subAdminExists = await SubAdmin.findOne({ mobileNumber });
@@ -124,26 +124,45 @@ const addSubAdmin = async (req, res) => {
       return res.status(400).json({ message: "Branch does not exist!" });
     }
 
-    // Hash the password (recommended for security)
-    // const hashedPassword = await bcrypt.hash(subAdminPassword, 10);
+    const profilePictureImg = await uploadOnCloudinary(profilePicture);
+
+    if (!profilePictureImg.url) {
+      throw new ApiError(
+        400,
+        "Error while uploading ProfileImage on cloudinary"
+      );
+    }
+    fs.unlink(profilePicture, (err) => {
+      if (err) {
+        console.error(
+          `Failed to delete uploaded profilePicture: ${err.message}`
+        );
+      } else {
+        console.log("Uploaded profilePicture deleted successfully from server");
+      }
+    });
 
     // Create the new subadmin
     const newSubAdmin = new SubAdmin({
       subAdminName,
       mobileNumber,
-      profilePicture,
+      profilePicture: profilePictureImg.url,
       address,
       subAdminPassword, // Use hashedPassword here if hashing
       branch: existingBranch._id,
+      admin: req?.admin?._id,
       role: "subAdmin",
     });
 
     // Save the subadmin to the database
     await newSubAdmin.save();
-    res.status(201).json({ message: "SubAdmin added successfully!" });
+
+    res
+      .status(201)
+      .send(new ApiResponse(200, newSubAdmin, "SubAdmin added successfully!"));
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Error adding subadmin" });
+    res.status(500).json(new ApiError(500, "Error adding subadmin"));
   }
 };
 
@@ -160,7 +179,7 @@ const deleteSubAdmin = async (req, res) => {
 
 // Get all SubAdmins (Admin-only access)
 const getAllSubAdmins = asyncHandler(async (req, res) => {
-  const subAdmins = await SubAdmin.find().select("-subAdminPassword");
+  const subAdmins = await SubAdmin.find();
   return res
     .status(200)
     .send(new ApiResponse(200, subAdmins, "SubAdmins found"));
@@ -169,9 +188,7 @@ const getAllSubAdmins = asyncHandler(async (req, res) => {
 // Get SubAdmin by ID
 const getSubAdminById = asyncHandler(async (req, res) => {
   const { subAdminId } = req.params;
-  const subAdmin = await SubAdmin.findById(subAdminId).select(
-    "-subAdminPassword"
-  );
+  const subAdmin = await SubAdmin.findById(subAdminId);
   if (!subAdmin) {
     throw new ApiError(404, "SubAdmin not found");
   }

@@ -32,7 +32,6 @@ const login = asyncHandler(async (req, res) => {
   try {
     const accessToken = await admin.generateAccessToken();
     const refreshToken = await admin.generateRefToken();
-
     admin.refreshToken = refreshToken;
     await admin.save({ validateBeforeSave: false });
 
