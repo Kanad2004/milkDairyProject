@@ -1,36 +1,29 @@
-import { v2 as cloudinary} from "cloudinary";
-import fs from "fs"
+// CloudinaryUtility.js
+import { v2 as cloudinary } from "cloudinary";
+import fs from "fs";
+import dotenv from "dotenv";
 
-    // Configuration
-    cloudinary.config({ 
-        cloud_name: process.env.CLOUD_NAME, 
-        api_key: process.env.API_KEY, 
-        api_secret: process.env.API_SECRET
+// Load environment variables from your .env file
+dotenv.config();
+
+// Configure Cloudinary using environment variables
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME, // Ensure .env uses this name
+  api_key: process.env.API_KEY, // Ensure .env uses this name
+  api_secret: process.env.API_SECRET, // Ensure .env uses this name
+});
+
+export const uploadOnCloudinary = async (filePath) => {
+  try {
+    const result = await cloudinary.uploader.upload(filePath, {
+      folder: "subadmin_profiles", // adjust folder name if needed
     });
-    
-    const uploadOnCloudinary = async (localFilePath) => {
-        try{
-            if(!localFilePath){
-                return null ;
-            }
-            const res = await cloudinary.uploader.upload(localFilePath,{
-                resource_type:"auto"
-            })
-            console.log("File Uploaded On Cloudinary . . .",res.url)
-            fs.unlink(localFilePath, (err) => {
-                if (err) {
-                  console.error("Failed to delete local file:", err);
-                } else {
-                  console.log("Local file deleted successfully.");
-                }
-              });
-            
-            return res.url;
-        }catch(err){
-            //It will remove the file from the server when upload is failed . . .
-            fs.unlinkSync(localFilePath)
-            return null ;
-        }
-    }
-
-export {uploadOnCloudinary}
+    console.log("Cloudinary Upload Result:", result);
+    // Return the secure URL of the uploaded image
+    return { url: result.secure_url };
+  } catch (error) {
+    console.error("Cloudinary Upload Error:", error);
+    // You can choose to throw an error or return null based on your needs
+    return null;
+  }
+};

@@ -8,6 +8,7 @@ import {
 import {
   createBranch,
   deleteBranchById,
+  getBranchById,
   getBranches,
   updateBranchById,
 } from "../controllers/branchController.js";
@@ -41,6 +42,13 @@ branchRouter.delete(
   authenticateAdmin,
   authorizeRoleAdmin(["Admin"]),
   deleteBranchById
+);
+
+branchRouter.get(
+  "/get-branch/:branchId",
+  authenticateAdmin,
+  authorizeRoleAdmin(["Admin"]),
+  getBranchById
 );
 
 export default branchRouter;

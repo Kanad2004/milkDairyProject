@@ -13,6 +13,7 @@ import {
   subAdminLogin,
   subAdminLogout,
 } from "../controllers/subadminController.js";
+import { upload } from "../middlewares/uploadFile.middleware.js";
 
 const subadminRouter = express.Router();
 
@@ -21,6 +22,7 @@ subadminRouter.post(
   "/addSubAdmin",
   authenticateAdmin,
   authorizeRoleAdmin(["Admin"]),
+  upload.single("image"),
   addSubAdmin
 );
 

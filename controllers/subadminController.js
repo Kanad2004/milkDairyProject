@@ -1,9 +1,12 @@
+// SubAdminController.js
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { SubAdmin } from "../model/SubAdmin.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import { Branch } from "../model/Branch.js";
+import { uploadOnCloudinary } from "../utils/CloudinaryUtility.js";
+import fs from "fs"; // Import fs since you're using fs.unlink later in the file
 
 // SubAdmin Login
 const subAdminLogin = asyncHandler(async (req, res) => {
@@ -20,8 +23,6 @@ const subAdminLogin = asyncHandler(async (req, res) => {
   }
 
   const isPassValid = await subAdmin.isPasswordCorrect(subAdminPassword);
-
-  // const isPassValid = await bcrypt.compare(subAdminPassword, subAdmin.subAdminPassword);
 
   if (!isPassValid) {
     throw new ApiError(401, "Invalid credentials");
@@ -67,6 +68,7 @@ const subAdminLogin = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Failed to log in. Please try again.");
   }
 });
+
 // SubAdmin Logout
 const subAdminLogout = asyncHandler(async (req, res) => {
   const subAdmin = req.subAdmin;
@@ -97,6 +99,8 @@ const addSubAdmin = async (req, res) => {
 
     const profilePicture = req?.file?.path;
 
+    console.log("Profile Picture Path: ", profilePicture);
+
     if (!profilePicture) {
       throw new ApiError(400, "Profile Img is missing");
     }
@@ -112,26 +116,20 @@ const addSubAdmin = async (req, res) => {
       branchId: branchId,
     });
 
-    // let branchId;
-    // if (existingBranch) {
-    //   branchId = existingBranch._id;
-    // } else {
-    //   const newBranch = await Branch.create(branch);
-    //   branchId = newBranch._id;
-    // }
-
     if (!existingBranch) {
       return res.status(400).json({ message: "Branch does not exist!" });
     }
 
     const profilePictureImg = await uploadOnCloudinary(profilePicture);
 
-    if (!profilePictureImg.url) {
+    if (!profilePictureImg || !profilePictureImg.url) {
       throw new ApiError(
         400,
         "Error while uploading ProfileImage on cloudinary"
       );
     }
+
+    // Delete the file from the server after successful upload
     fs.unlink(profilePicture, (err) => {
       if (err) {
         console.error(
@@ -155,11 +153,19 @@ const addSubAdmin = async (req, res) => {
     });
 
     // Save the subadmin to the database
-    await newSubAdmin.save();
+    const savedSubAdmin = await newSubAdmin.save();
+
+    console.log(savedSubAdmin._id);
+
+    const subAdminWithBranch = await SubAdmin.findById(
+      savedSubAdmin._id
+    ).populate("branch");
 
     res
       .status(201)
-      .send(new ApiResponse(200, newSubAdmin, "SubAdmin added successfully!"));
+      .send(
+        new ApiResponse(200, subAdminWithBranch, "SubAdmin added successfully!")
+      );
   } catch (err) {
     console.error(err);
     res.status(500).json(new ApiError(500, "Error adding subadmin"));
@@ -175,6 +181,7 @@ const deleteSubAdmin = async (req, res) => {
       new ApiResponse(200, { success: true }, "SubAdmin deleted successfully")
     );
 };
+
 // Additional CRUD operations (optional)
 
 // Get all SubAdmins (Admin-only access)
