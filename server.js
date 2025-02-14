@@ -2,12 +2,14 @@ import express from "express";
 import adminRouter from "./routes/adminRouter.js";
 import subAdminRouter from "./routes/subAdminRouter.js";
 import branchRouter from "./routes/branchRouter.js";
-
+import { v2 as cloudinary} from "cloudinary";
+import fs from "fs"
 import productRouter from "./routes/productRouter.js";
 import connectDB from "./db/index.js";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import farmerRouter from "./routes/farmerRouter.js";
+import newofferRouter from "./routes/newofferRouter.js";
 import cors from "cors";
 import mongoose from "mongoose";
 
@@ -40,10 +42,19 @@ app.use("/api/v1/branch", branchRouter);
 app.use("/api/v1/customer", farmerRouter);
 app.use("/api/v1/product", productRouter);
 app.use("/api/v1/farmer", farmerRouter);
+app.use("/api/v1/new-offer" , newofferRouter);
 
 // Connect to MongoDB and start the server
 
+<<<<<<< HEAD
+cloudinary.config({ 
+  cloud_name: process.env.CLOUD_NAME, 
+  api_key: process.env.API_KEY, 
+  api_secret: process.env.API_SECRET
+});
+=======
 // mongoose.set("strictPopulate", false);
+>>>>>>> 6e37f7e21e32364caa1b66950ac035b30a93aa34
 
 connectDB()
   .then(() => {

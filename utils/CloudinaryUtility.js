@@ -7,11 +7,11 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // Configure Cloudinary using environment variables
-cloudinary.config({
-  cloud_name: process.env.CLOUD_NAME, // Ensure .env uses this name
-  api_key: process.env.API_KEY, // Ensure .env uses this name
-  api_secret: process.env.API_SECRET, // Ensure .env uses this name
-});
+// cloudinary.config({
+//   cloud_name: process.env.CLOUD_NAME, // Ensure .env uses this name
+//   api_key: process.env.API_KEY, // Ensure .env uses this name
+//   api_secret: process.env.API_SECRET, // Ensure .env uses this name
+// });
 
 export const uploadOnCloudinary = async (filePath) => {
   try {

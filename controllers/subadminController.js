@@ -94,6 +94,15 @@ const subAdminLogout = asyncHandler(async (req, res) => {
 
 const addSubAdmin = async (req, res) => {
   try {
+<<<<<<< HEAD
+    const {
+      subAdminName,
+      mobileNumber,
+      address,
+      subAdminPassword,
+      branchId,
+    } = req.body;
+=======
     const { subAdminName, mobileNumber, address, subAdminPassword, branchId } =
       req.body;
 
@@ -103,6 +112,13 @@ const addSubAdmin = async (req, res) => {
 
     if (!profilePicture) {
       throw new ApiError(400, "Profile Img is missing");
+    }
+>>>>>>> 6e37f7e21e32364caa1b66950ac035b30a93aa34
+
+    const profilePicture = req?.file?.path ;
+
+    if (!profilePicture) {
+      throw new ApiError(400, "Cover Img is missing");
     }
 
     // Check if the subadmin already exists
@@ -122,6 +138,14 @@ const addSubAdmin = async (req, res) => {
 
     const profilePictureImg = await uploadOnCloudinary(profilePicture);
 
+<<<<<<< HEAD
+    if (!profilePictureImg.url) {
+      throw new ApiError(400, "Error while uploading ProfileImage on cloudinary");
+    }
+    fs.unlink(profilePicture, (err) => {
+      if (err) {
+        console.error(`Failed to delete uploaded profilePicture: ${err.message}`);
+=======
     if (!profilePictureImg || !profilePictureImg.url) {
       throw new ApiError(
         400,
@@ -135,6 +159,7 @@ const addSubAdmin = async (req, res) => {
         console.error(
           `Failed to delete uploaded profilePicture: ${err.message}`
         );
+>>>>>>> 6e37f7e21e32364caa1b66950ac035b30a93aa34
       } else {
         console.log("Uploaded profilePicture deleted successfully from server");
       }
@@ -144,15 +169,31 @@ const addSubAdmin = async (req, res) => {
     const newSubAdmin = new SubAdmin({
       subAdminName,
       mobileNumber,
+<<<<<<< HEAD
+      profilePicture :profilePictureImg.url ,
+      address,
+      subAdminPassword, // Use hashedPassword here if hashing
+      branch: existingBranch._id,
+      admin : req?.admin?._id , 
+=======
       profilePicture: profilePictureImg.url,
       address,
       subAdminPassword, // Use hashedPassword here if hashing
       branch: existingBranch._id,
       admin: req?.admin?._id,
+>>>>>>> 6e37f7e21e32364caa1b66950ac035b30a93aa34
       role: "subAdmin",
     });
 
     // Save the subadmin to the database
+<<<<<<< HEAD
+    await newSubAdmin.save();
+
+    res.status(201).send(new ApiResponse(200 , newSubAdmin , "SubAdmin added successfully!"));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json(new ApiError(500 , "Error adding subadmin"));
+=======
     const savedSubAdmin = await newSubAdmin.save();
 
     console.log(savedSubAdmin._id);
@@ -171,6 +212,7 @@ const addSubAdmin = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json(new ApiError(500, "Error adding subadmin"));
+>>>>>>> 6e37f7e21e32364caa1b66950ac035b30a93aa34
   }
 };
 
