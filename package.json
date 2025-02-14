@@ -22,12 +22,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.5",
     "multer": "^1.4.5-lts.1",
-<<<<<<< HEAD
-    "twilio": "^5.4.2"
-=======
     "path": "^0.12.7",
     "xlsx": "^0.18.5"
->>>>>>> 14a5353bd279100d6e5c27cb46140631f278c929
   },
   "devDependencies": {
     "nodemon": "^3.1.9"

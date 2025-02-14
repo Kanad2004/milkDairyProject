@@ -10,11 +10,7 @@ const adminSchema = new mongoose.Schema(
     adminMobileNumber: {
       type: String,
       required: true,
-<<<<<<< HEAD
-      unique : true ,
-=======
       unique: true,
->>>>>>> 14a5353bd279100d6e5c27cb46140631f278c929
     },
     adminPassword: {
       type: String,
@@ -43,29 +39,6 @@ adminSchema.methods.isPasswordCorrect = async function (adminPassword) {
   return this.adminPassword === adminPassword;
 };
 
-<<<<<<< HEAD
-adminSchema.methods.generateAccessToken = async function (){
-  return jwt.sign({
-      _id : this._id,
-      adminMobileNumber:this.adminMobileNumber ,
-      adminName : this.adminName ,
-  },
-  process.env.ACCESS_TOKEN_SECRET , {
-      expiresIn : process.env.ACCESS_TOKEN_EXPIRY
-  })
-}
-
-adminSchema.methods.generateRefToken = async function (){
-  return jwt.sign({
-      _id : this._id,
-  },
-  process.env.REFRESH_TOKEN_SECRET , {
-      expiresIn : process.env.REFRESH_TOKEN_EXPIRY
-  })
-}
-adminSchema.index({ adminMobileNumber: 1 });
-export const Admin = mongoose.model("Admin" , adminSchema)
-=======
 adminSchema.methods.generateAccessToken = async function (adminPassword) {
   return jwt.sign(
     {
@@ -93,4 +66,3 @@ adminSchema.methods.generateRefToken = async function (adminPassword) {
 };
 
 export const Admin = mongoose.model("Admin", adminSchema);
->>>>>>> 14a5353bd279100d6e5c27cb46140631f278c929

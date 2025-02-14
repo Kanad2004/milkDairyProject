@@ -2,9 +2,10 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { Admin } from "../model/Admin.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { NewOffer } from "../models/newOfferModel.js";
+import { NewOffer } from "../model/NewOffer.js";
 import {uploadOnCloudinary} from "../utils/CloudinaryUtility.js"
-
+import mongoose from "mongoose";
+import { v2 as cloudinary} from "cloudinary";
 
 //This function is just for getting the public id from the url of the file . . .
 const getPublicIdFromUrl = (url) => {
@@ -21,21 +22,22 @@ export const addNewOffer =asyncHandler( async (req, res)  => {
     if (!title?.trim() || !description?.trim()) {
       throw new ApiError(400, "All fields are required");
     }
-
     if (!req.file) {
       return res.status(400).json(new ApiError(400 ,'', "No offer file uploaded"));
     }
-    const localOfferPath = req.file.path;
+    const localOfferPath = req?.file?.path;
+
     const offerUrl = await uploadOnCloudinary(localOfferPath);
-
+    
     if(!offerUrl){
-      throw new ApiError("Failed to upload the offer file to cloudinary")
+      throw new ApiError(500 , "Failed to upload the offer file to cloudinary")
     }
-
+    
     const newOffer = new NewOffer({ link : offerUrl, title, description });
     await newOffer.save();
 
-    const createdOffer = await newOffer.findById(newOffer._id)
+    const createdOffer = await NewOffer.findById(newOffer._id)
+
     if(!createdOffer){
       throw new ApiError(500 , "Failed to create the new Offer")
     }
@@ -66,6 +68,7 @@ export const editNewOffer =asyncHandler( async (req, res)  => {
     throw new ApiError(404 , "Offer is not updated") ;
   }
 
+
   return res.status(200).send(new ApiResponse(200 , updatedOffer , "Offer updated successfully"));
 });
 
@@ -81,15 +84,16 @@ export const deleteNewOffer = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Offer not found");
     }
     const offerPublicId = getPublicIdFromUrl(offer.link);
-
+    
     const deleteOfferPromise = cloudinary.uploader.destroy(offerPublicId, { resource_type: 'image' }); 
 
-    await Promise.all({deleteOfferPromise});
+    await Promise.all([deleteOfferPromise]);
 
     await NewOffer.findByIdAndDelete(id);
 
     res.status(200).send(new ApiResponse(200 , null , "Offer deleted successfully"))
     }catch (error) {
+      console.log("error: " , error)
       return res.status(500).send(new ApiError(500 , "Failed to delete offer"));
     }
 }  
@@ -127,7 +131,7 @@ export const updateOfferImage = asyncHandler(async (req,res) => {
   )
 
   return res.status(200).json(
-      new ApiResponse(200 , user , "Offer Image is updated Successfully")
+      new ApiResponse(200 , updatedOffer , "Offer Image is updated Successfully")
   )
 })
 

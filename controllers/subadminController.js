@@ -3,11 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { SubAdmin } from "../model/SubAdmin.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
-<<<<<<< HEAD
-import {Branch} from "../model/Branch.js"
-=======
 import { Branch } from "../model/Branch.js";
->>>>>>> 14a5353bd279100d6e5c27cb46140631f278c929
 
 // SubAdmin Login
 const subAdminLogin = asyncHandler(async (req, res) => {
@@ -95,65 +91,25 @@ const subAdminLogout = asyncHandler(async (req, res) => {
 });
 
 const addSubAdmin = async (req, res) => {
-<<<<<<< HEAD
-    try {
-      
-      const { subAdminName, subAdminEmail, subAdminPassword, branch } = req.body;
-  
-      // Check if the subadmin already exists
-      const subAdminExists = await SubAdmin.findOne({ subAdminEmail });
-      if (subAdminExists) {
-        return res.status(400).json({ message: "SubAdmin already exists!" });
-      }
-  
-      // Find or create the branch
-      const existingBranch = await Branch.findOne({
-        branchName: branch.branchName,
-        location: branch.location,
-      });
-  
-      let branchId;
-      if (existingBranch) {
-        branchId = existingBranch._id;
-      } else {
-        const newBranch = await Branch.create(branch);
-        branchId = newBranch._id;
-      }
-  
-      // Hash the password (recommended for security)
-      // const hashedPassword = await bcrypt.hash(subAdminPassword, 10);
-  
-      // Create the new subadmin
-      const newSubAdmin = new SubAdmin({
-        subAdminName,
-        subAdminEmail,
-        subAdminPassword, // Use hashedPassword here if hashing
-        branch: branchId,
-        role: "SubAdmin"
-      });
-  
-      // Save the subadmin to the database
-      await newSubAdmin.save();
-      res.status(201).json({ message: "SubAdmin added successfully!" });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: "Error adding subadmin" });
-=======
   try {
     const {
       subAdminName,
       mobileNumber,
-      profilePicture,
       address,
       subAdminPassword,
       branchId,
     } = req.body;
 
+    const profilePicture = req?.file?.path ;
+
+    if (!profilePicture) {
+      throw new ApiError(400, "Cover Img is missing");
+    }
+
     // Check if the subadmin already exists
     const subAdminExists = await SubAdmin.findOne({ mobileNumber });
     if (subAdminExists) {
       return res.status(400).json({ message: "SubAdmin already exists!" });
->>>>>>> 14a5353bd279100d6e5c27cb46140631f278c929
     }
 
     // Find or create the branch
@@ -173,26 +129,38 @@ const addSubAdmin = async (req, res) => {
       return res.status(400).json({ message: "Branch does not exist!" });
     }
 
-    // Hash the password (recommended for security)
-    // const hashedPassword = await bcrypt.hash(subAdminPassword, 10);
+    const profilePictureImg = await uploadOnCloudinary(profilePicture);
+
+    if (!profilePictureImg.url) {
+      throw new ApiError(400, "Error while uploading ProfileImage on cloudinary");
+    }
+    fs.unlink(profilePicture, (err) => {
+      if (err) {
+        console.error(`Failed to delete uploaded profilePicture: ${err.message}`);
+      } else {
+        console.log("Uploaded profilePicture deleted successfully from server");
+      }
+    });
 
     // Create the new subadmin
     const newSubAdmin = new SubAdmin({
       subAdminName,
       mobileNumber,
-      profilePicture,
+      profilePicture :profilePictureImg.url ,
       address,
       subAdminPassword, // Use hashedPassword here if hashing
       branch: existingBranch._id,
+      admin : req?.admin?._id , 
       role: "subAdmin",
     });
 
     // Save the subadmin to the database
     await newSubAdmin.save();
-    res.status(201).json({ message: "SubAdmin added successfully!" });
+
+    res.status(201).send(new ApiResponse(200 , newSubAdmin , "SubAdmin added successfully!"));
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Error adding subadmin" });
+    res.status(500).json(new ApiError(500 , "Error adding subadmin"));
   }
 };
 

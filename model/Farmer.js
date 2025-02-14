@@ -74,8 +74,4 @@ const farmerSchema = new mongoose.Schema(
   }
 );
 
-<<<<<<< HEAD
 export const Farmer = mongoose.model("Farmer", farmerSchema);
-=======
-export const Farmer = mongoose.model("Farmer", farmerSchema);
->>>>>>> 14a5353bd279100d6e5c27cb46140631f278c929

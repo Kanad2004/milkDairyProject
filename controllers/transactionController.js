@@ -8,10 +8,10 @@ import { Product } from "../models/Product.js";
 // 1. Add Item
 export const addItem = asyncHandler (async (req, res) => {
   try {
-    const { productId, quantity } = req.body;
+    const { productId, quantity , pamount} = req.body;
 
     // Validate input
-    if (!productId || !quantity || quantity <= 0) {
+    if (!productId || !quantity || quantity <= 0 || !pamount || pamount<=0 ) {
       return res.status(400).json({ error: "Invalid product or quantity" });
     }
 
@@ -25,6 +25,7 @@ export const addItem = asyncHandler (async (req, res) => {
     const transactionItem = new TransactionItem({
       product: productId,
       quantity,
+      pamount, 
     });
     await transactionItem.save();
 
@@ -50,6 +51,9 @@ export const saveTransaction = async (req, res) => {
       if (!transactionItem) {
         return res.status(404).send(new ApiError(404 , `Transaction item ${itemId} not found` ));
       }
+      // else {
+      //   amount+=transactionItem.pamount;
+      // }
     }
 
     // Create the transaction

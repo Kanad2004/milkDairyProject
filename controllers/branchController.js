@@ -3,16 +3,6 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 
 //!This is done
 const createBranch = async (req, res) => {
-<<<<<<< HEAD
-    const { branchName, location } = req.body;
-    if (!branchName || !location) {
-        throw new ApiError(400, "Branch name and location are required");
-    }
-
-    const branch = await Branch.create({ branchName, location });
-
-    return res.status(201).send(new ApiResponse(201 , branch , "Branch created successfully"));
-=======
   const { branchId, branchAddress, location } = req.body;
   const branch = await Branch.findOne({ branchId });
 
@@ -33,20 +23,14 @@ const createBranch = async (req, res) => {
   return res
     .status(201)
     .send(new ApiResponse(200, newBranch, "Branch created successfully"));
->>>>>>> 14a5353bd279100d6e5c27cb46140631f278c929
 };
 
 //!This is done
 const getBranches = async (req, res) => {
-<<<<<<< HEAD
-    const branches = await Branch.find();
-    res.status(200).send(new ApiResponse(200 , branches , "All branches fetched successfully"));
-=======
   const branches = await Branch.find();
   res
     .status(200)
     .send(new ApiResponse(200, branches, "all branched getched successfully"));
->>>>>>> 14a5353bd279100d6e5c27cb46140631f278c929
 };
 
 //!This is done

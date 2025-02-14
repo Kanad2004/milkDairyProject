@@ -203,8 +203,4 @@ export {
   updateProductImg,
   deleteProductById,
   addQuantity,
-<<<<<<< HEAD
 };
-=======
-};
->>>>>>> 14a5353bd279100d6e5c27cb46140631f278c929
