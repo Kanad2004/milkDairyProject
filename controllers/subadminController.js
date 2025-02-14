@@ -159,16 +159,11 @@ const addSubAdmin = async (req, res) => {
 
     console.log(subAdminWithBranch);
 
-<<<<<<< HEAD
-
-    res.status(201).send(new ApiResponse(200 , subAdminWithBranch  , "SubAdmin added successfully!"));
-=======
     res
       .status(201)
       .send(
         new ApiResponse(200, subAdminWithBranch, "SubAdmin added successfully!")
       );
->>>>>>> cf6f076e74b15ac0b430fa9e0b6be23df5ab1e50
   } catch (err) {
     console.error(err);
     res.status(500).json(new ApiError(500, "Error adding subadmin"));
