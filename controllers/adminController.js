@@ -8,7 +8,7 @@ import { Branch } from "../model/Branch.js";
 //do some changes in options object when you are going to test the login controller as well as in frontEnd part . . .
 //cookies are not set in the mobile application at the user end that's why here we are sending the accesstoken and refreshtoken in the response to the user
 
-//!This is done
+//we have to use secure equal to true in the production
 const login = asyncHandler(async (req, res) => {
   const { adminMobileNumber, adminPassword } = req.body;
 

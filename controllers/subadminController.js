@@ -99,10 +99,8 @@ const addSubAdmin = async (req, res) => {
 
     const profilePicture = req?.file?.path;
 
-    console.log("Profile Picture Path: ", profilePicture);
-
     if (!profilePicture) {
-      throw new ApiError(400, "Profile Img is missing");
+      throw new ApiError(400, "Cover Img is missing");
     }
 
     // Check if the subadmin already exists
@@ -122,14 +120,12 @@ const addSubAdmin = async (req, res) => {
 
     const profilePictureImg = await uploadOnCloudinary(profilePicture);
 
-    if (!profilePictureImg || !profilePictureImg.url) {
+    if (!profilePictureImg.url) {
       throw new ApiError(
         400,
         "Error while uploading ProfileImage on cloudinary"
       );
     }
-
-    // Delete the file from the server after successful upload
     fs.unlink(profilePicture, (err) => {
       if (err) {
         console.error(
@@ -197,7 +193,9 @@ const getAllSubAdmins = asyncHandler(async (req, res) => {
 // Get SubAdmin by ID
 const getSubAdminById = asyncHandler(async (req, res) => {
   const { subAdminId } = req.params;
-  const subAdmin = await SubAdmin.findById(subAdminId);
+  const subAdmin = await SubAdmin.findById(subAdminId)
+    .populate("branch")
+    .populate("admin");
   if (!subAdmin) {
     throw new ApiError(404, "SubAdmin not found");
   }
