@@ -46,7 +46,7 @@ subadminRouter.get(
 
 //!This is done
 subadminRouter.delete(
-  "/:subAdminId",
+  "/delete/:subAdminId",
   authenticateAdmin,
   authorizeRoleAdmin("Admin"),
   deleteSubAdmin
