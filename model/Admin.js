@@ -7,9 +7,10 @@ const adminSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    adminEmail: {
+    adminMobileNumber: {
       type: String,
       required: true,
+      unique: true,
     },
     adminPassword: {
       type: String,
@@ -42,7 +43,7 @@ adminSchema.methods.generateAccessToken = async function (adminPassword) {
   return jwt.sign(
     {
       _id: this._id,
-      adminEmail: this.adminEmail,
+      adminMobileNumber: this.adminMobileNumber,
       adminName: this.adminName,
     },
     process.env.ACCESS_TOKEN_SECRET,

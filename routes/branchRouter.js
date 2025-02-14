@@ -5,7 +5,13 @@ import {
   authorizeRoleAdmin,
   authorizeRoleSubAdmin,
 } from "../middlewares/auth.js";
-import { createBranch, getBranches } from "../controllers/branchController.js";
+import {
+  createBranch,
+  deleteBranchById,
+  getBranchById,
+  getBranches,
+  updateBranchById,
+} from "../controllers/branchController.js";
 const branchRouter = express.Router();
 
 //!This is done
@@ -22,6 +28,27 @@ branchRouter.get(
   authenticateAdmin,
   authorizeRoleAdmin(["Admin"]),
   getBranches
+);
+
+branchRouter.patch(
+  "/update-branch/:branchId",
+  authenticateAdmin,
+  authorizeRoleAdmin(["Admin"]),
+  updateBranchById
+);
+
+branchRouter.delete(
+  "/delete-branch/:branchId",
+  authenticateAdmin,
+  authorizeRoleAdmin(["Admin"]),
+  deleteBranchById
+);
+
+branchRouter.get(
+  "/get-branch/:branchId",
+  authenticateAdmin,
+  authorizeRoleAdmin(["Admin"]),
+  getBranchById
 );
 
 export default branchRouter;

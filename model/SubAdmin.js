@@ -6,16 +6,24 @@ const subAdminSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    subAdminEmail: {
-      type: String,
-      required: true,
-    },
     subAdminPassword: {
       type: String,
       required: true,
     },
     refreshToken: {
       type: String,
+    },
+    profilePicture: {
+      type: String,
+    },
+    mobileNumber: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    address: {
+      type: String,
+      required: true,
     },
     admin: {
       type: mongoose.Schema.Types.ObjectId,
@@ -49,7 +57,7 @@ subAdminSchema.methods.generateAccessToken = async function (subAdminPassword) {
   return jwt.sign(
     {
       _id: this._id,
-      subAdminEmail: this.subAdminEmail,
+      mobileNumber: this.mobileNumber,
       subAdminName: this.subAdminName,
     },
     process.env.ACCESS_TOKEN_SECRET,
