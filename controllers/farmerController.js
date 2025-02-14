@@ -11,43 +11,111 @@ const addFarmer = asyncHandler(async (req, res) => {
   const { farmerName, mobileNumber, address, milkType, gender, joiningDate } =
     req.body;
   const subAdmin = req.subAdmin._id;
-  if ([farmerName, mobileNumber, address].some((field) => field?.trim === "")) {
-    throw new ApiError(400, "All Fields are required ");
+
+  // Validate that all required fields are provided and not empty.
+  // For string fields, we trim the value to avoid spaces being considered valid.
+  if (
+    [farmerName, mobileNumber, address, milkType, gender, joiningDate].some(
+      (field) => {
+        return !field || (typeof field === "string" && field.trim() === "");
+      }
+    )
+  ) {
+    throw new ApiError(400, "All fields are required");
   }
 
-  const farmer = await Farmer.findOne({ mobileNumber });
-  console.log(farmer);
-
-  if (farmer !== null) {
-    throw new ApiError(409, "farmer with same credentials already exists");
+  // Check if a farmer with the same mobile number already exists
+  const existingFarmer = await Farmer.findOne({
+    mobileNumber: mobileNumber,
+  });
+  if (existingFarmer) {
+    throw new ApiError(
+      409,
+      "A farmer with the same mobile number already exists"
+    );
   }
 
-  const newfarmer = await Farmer.create({
-    farmerName,
-    mobileNumber,
-    address,
+  // Create a new farmer with the provided data.
+  // For string fields, we trim the values. For joiningDate, convert it to a Date object if needed.
+  const newFarmer = await Farmer.create({
+    farmerName: farmerName,
+    mobileNumber: mobileNumber,
+    address: address,
+    milkType: milkType,
+    gender: gender,
+    joiningDate: new Date(joiningDate), // Adjust formatting as needed
     subAdmin,
   });
 
-  if (!newfarmer) {
-    throw new ApiError(500, "farmer is not added successfully");
+  if (!newFarmer) {
+    throw new ApiError(500, "Farmer was not added successfully");
   }
 
+  const createdFarmer = await Farmer.findById(newFarmer._id).populate(
+    "subAdmin"
+  );
+
+  // Return a success response with a 201 status code.
   return res
     .status(201)
-    .json(new ApiResponse(200, newfarmer, "farmer Registered Successfully ! "));
+    .json(
+      new ApiResponse(201, createdFarmer, "Farmer Registered Successfully!")
+    );
 });
 
 const getAllfarmers = asyncHandler(async (req, res) => {
-  const farmers = await Farmer.find();
-
-  if (!farmers) {
+  const subAdminId = req.subAdmin._id;
+  const farmers = await Farmer.find({ subAdmin: subAdminId }).populate(
+    "subAdmin"
+  );
+  if (!farmers || farmers.length === 0) {
     throw new ApiError(404, "No farmers found");
   }
 
   return res
     .status(200)
-    .send(new ApiResponse(200, farmers, "All farmers got successfully . .."));
+    .json(new ApiResponse(200, farmers, "Farmers fetched successfully"));
+});
+
+const updateFarmer = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const subAdmin = req.subAdmin._id;
+
+  const farmer = await Farmer.findOne({ _id: id, subAdmin: subAdmin });
+
+  if (!farmer) {
+    throw new ApiError(
+      404,
+      "Farmer not found or you are not authorized to update this farmer"
+    );
+  }
+
+  const { farmerName, mobileNumber, address, milkType, gender, joiningDate } =
+    req.body;
+
+  if (
+    !farmerName ||
+    !mobileNumber ||
+    !address ||
+    !milkType ||
+    !gender ||
+    !joiningDate
+  ) {
+    throw new ApiError(400, "All fields are required");
+  }
+
+  farmer.farmerName = farmerName;
+  farmer.mobileNumber = mobileNumber;
+  farmer.address = address;
+  farmer.milkType = milkType;
+  farmer.gender = gender;
+  farmer.joiningDate = joiningDate;
+
+  const updatedFarmer = await farmer.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedFarmer, "Farmer updated successfully"));
 });
 
 const addMilk = asyncHandler(async (req, res) => {
@@ -86,58 +154,21 @@ const addMilk = asyncHandler(async (req, res) => {
 });
 
 const deleteFarmer = async (req, res) => {
-  const { farmerNumber } = req.body;
-  const farmer = await Farmer.findOne({ mobileNumber: farmerNumber });
-  console.log("FarmerNumber", farmerNumber);
-  console.log("Farmer", farmer);
+  const { id } = req.params;
+  const subAdminId = req.subAdmin._id;
 
+  const farmer = await Farmer.findOne({ _id: id, subAdmin: subAdminId });
   if (!farmer) {
-    throw new ApiError(404, "Farmer not found");
+    throw new ApiError(
+      404,
+      "Farmer not found or you are not authorized to delete this farmer"
+    );
   }
-
-  await Farmer.deleteOne({ mobileNumber: farmerNumber });
-  res.status(200).json(new ApiResponse(200, {}, "Farmer deleted"));
+  await farmer.deleteOne();
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Farmer deleted successfully"));
 };
-
-// const updateFarmer = async (req, res) => {
-//   const {
-//     farmerName,
-//     mobileNumber,
-//     address,
-//     totalLoan,
-//     totalLoanPaidBack,
-//     totalLoanRemaining,
-//     loans,
-//   } = req.body;
-//   const farmer = await Farmer.findOne({ farmerNumber: farmerNumber });
-
-//   if (!farmer) {
-//     throw new ApiError(404, "Farmer not found");
-//   }
-
-//   if (
-//     [
-//       farmerName,
-//       mobileNumber,
-//       address,
-//       totalLoan,
-//       totalLoanPaidBack,
-//       totalLoanRemaining,
-//       loans,
-//     ].some((field) => field?.trim === "")
-//   ) {
-//     throw new ApiError(400, "All Fields are required ");
-//   }
-//   farmer.farmerName = farmerName;
-//   farmer.mobileNumber = mobileNumber;
-//   farmer.address = address;
-//   farmer.totalLoan = totalLoan;
-//   farmer.totalLoanPaidBack = totalLoanPaidBack;
-//   farmer.totalLoanRemaining = totalLoanRemaining;
-//   farmer.loan = loans;
-//   await farmer.save();
-//   res.status(200).json(new ApiResponse(200, farmer, "Farmer updated"));
-// };
 
 const exportFarmerDetail = async (req, res) => {
   try {
@@ -186,4 +217,11 @@ const exportFarmerDetail = async (req, res) => {
   }
 };
 
-export { addFarmer, getAllfarmers, addMilk, deleteFarmer, exportFarmerDetail };
+export {
+  addFarmer,
+  getAllfarmers,
+  addMilk,
+  deleteFarmer,
+  exportFarmerDetail,
+  updateFarmer,
+};

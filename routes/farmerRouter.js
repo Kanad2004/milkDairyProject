@@ -5,6 +5,7 @@ import {
   deleteFarmer,
   exportFarmerDetail,
   getAllfarmers,
+  updateFarmer,
 } from "../controllers/farmerController.js";
 const farmerRouter = express.Router();
 import {
@@ -36,7 +37,7 @@ farmerRouter.patch(
 );
 
 farmerRouter.delete(
-  "/delete-farmer",
+  "/delete/:id",
   authenticateSubAdmin,
   authorizeRoleSubAdmin(["subAdmin"]),
   deleteFarmer
@@ -47,6 +48,13 @@ farmerRouter.get(
   authenticateSubAdmin,
   authorizeRoleSubAdmin(["subAdmin"]),
   exportFarmerDetail
+);
+
+farmerRouter.patch(
+  "/update/:id",
+  authenticateSubAdmin,
+  authorizeRoleSubAdmin(["subAdmin"]),
+  updateFarmer
 );
 
 export default farmerRouter;

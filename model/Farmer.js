@@ -72,11 +72,11 @@ const farmerSchema = new mongoose.Schema(
       {
         loanDate: {
           type: Date,
-          required: true,
+          // required: true,
         },
         loanAmount: {
           type: Number,
-          required: true,
+          // required: true,
         },
       },
     ],
