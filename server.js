@@ -2,8 +2,8 @@ import express from "express";
 import adminRouter from "./routes/adminRouter.js";
 import subAdminRouter from "./routes/subAdminRouter.js";
 import branchRouter from "./routes/branchRouter.js";
-import { v2 as cloudinary} from "cloudinary";
-import fs from "fs"
+import { v2 as cloudinary } from "cloudinary";
+import fs from "fs";
 import productRouter from "./routes/productRouter.js";
 import connectDB from "./db/index.js";
 import cookieParser from "cookie-parser";
@@ -42,7 +42,7 @@ app.use("/api/v1/branch", branchRouter);
 app.use("/api/v1/customer", farmerRouter);
 app.use("/api/v1/product", productRouter);
 app.use("/api/v1/farmer", farmerRouter);
-app.use("/api/v1/new-offer" , newofferRouter);
+app.use("/api/v1/new-offer", newofferRouter);
 
 // Connect to MongoDB and start the server
 

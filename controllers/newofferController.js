@@ -49,7 +49,6 @@ export const addNewOffer = asyncHandler(async (req, res) => {
       .status(201)
       .send(new ApiResponse(201, newOffer, "Offer added successfully"));
   } catch (error) {
-    console.log("error: " , error)
     res.status(500).send(new ApiError(500, "Failed to add offer"));
   }
 });

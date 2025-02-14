@@ -94,15 +94,10 @@ const subAdminLogout = asyncHandler(async (req, res) => {
 
 const addSubAdmin = async (req, res) => {
   try {
-    const {
-      subAdminName,
-      mobileNumber,
-      address,
-      subAdminPassword,
-      branchId,
-    } = req.body;
+    const { subAdminName, mobileNumber, address, subAdminPassword, branchId } =
+      req.body;
 
-    const profilePicture = req?.file?.path ;
+    const profilePicture = req?.file?.path;
 
     if (!profilePicture) {
       throw new ApiError(400, "Cover Img is missing");
@@ -126,11 +121,16 @@ const addSubAdmin = async (req, res) => {
     const profilePictureImg = await uploadOnCloudinary(profilePicture);
 
     if (!profilePictureImg.url) {
-      throw new ApiError(400, "Error while uploading ProfileImage on cloudinary");
+      throw new ApiError(
+        400,
+        "Error while uploading ProfileImage on cloudinary"
+      );
     }
     fs.unlink(profilePicture, (err) => {
       if (err) {
-        console.error(`Failed to delete uploaded profilePicture: ${err.message}`);
+        console.error(
+          `Failed to delete uploaded profilePicture: ${err.message}`
+        );
       } else {
         console.log("Uploaded profilePicture deleted successfully from server");
       }
@@ -140,11 +140,11 @@ const addSubAdmin = async (req, res) => {
     const newSubAdmin = new SubAdmin({
       subAdminName,
       mobileNumber,
-      profilePicture :profilePictureImg.url ,
+      profilePicture: profilePictureImg.url,
       address,
       subAdminPassword, // Use hashedPassword here if hashing
       branch: existingBranch._id,
-      admin : req?.admin?._id , 
+      admin: req?.admin?._id,
       role: "subAdmin",
     });
 
@@ -159,11 +159,19 @@ const addSubAdmin = async (req, res) => {
 
     console.log(subAdminWithBranch);
 
+<<<<<<< HEAD
 
     res.status(201).send(new ApiResponse(200 , subAdminWithBranch  , "SubAdmin added successfully!"));
+=======
+    res
+      .status(201)
+      .send(
+        new ApiResponse(200, subAdminWithBranch, "SubAdmin added successfully!")
+      );
+>>>>>>> cf6f076e74b15ac0b430fa9e0b6be23df5ab1e50
   } catch (err) {
     console.error(err);
-    res.status(500).json(new ApiError(500 , "Error adding subadmin"));
+    res.status(500).json(new ApiError(500, "Error adding subadmin"));
   }
 };
 
@@ -190,7 +198,9 @@ const getAllSubAdmins = asyncHandler(async (req, res) => {
 // Get SubAdmin by ID
 const getSubAdminById = asyncHandler(async (req, res) => {
   const { subAdminId } = req.params;
-  const subAdmin = await SubAdmin.findById(subAdminId);
+  const subAdmin = await SubAdmin.findById(subAdminId)
+    .populate("branch")
+    .populate("admin");
   if (!subAdmin) {
     throw new ApiError(404, "SubAdmin not found");
   }

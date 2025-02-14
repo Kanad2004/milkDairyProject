@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 //we have to add the status of the product which is inStock or outStock
-// product category , as well as type of the mass percentage . . . 
+// product category , as well as type of the mass percentage . . .
 const productSchema = new mongoose.Schema(
   {
     productName: {

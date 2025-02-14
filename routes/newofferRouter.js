@@ -1,8 +1,19 @@
-//In this code the middleware should be added . . . 
-import express from "express"
-import {addNewOffer , editNewOffer , deleteNewOffer , updateOfferImage ,getAllOffers} from "../controllers/newofferController.js";
-import { authenticateSubAdmin, authenticateAdmin, authorizeRoleAdmin ,authorizeRoleSubAdmin } from "../middlewares/auth.js";
-import {upload} from "../middlewares/uploadFile.middleware.js";
+//In this code the middleware should be added . . .
+import express from "express";
+import {
+  addNewOffer,
+  editNewOffer,
+  deleteNewOffer,
+  updateOfferImage,
+  getAllOffers,
+} from "../controllers/newofferController.js";
+import {
+  authenticateSubAdmin,
+  authenticateAdmin,
+  authorizeRoleAdmin,
+  authorizeRoleSubAdmin,
+} from "../middlewares/auth.js";
+import { upload } from "../middlewares/uploadFile.middleware.js";
 // Add Authentication and authorization middleware in this . . .
 const newofferRouter = express.Router();
 

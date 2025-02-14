@@ -22,7 +22,6 @@
 //   }
 // );
 
-
 // export const TransactionItem = mongoose.model("TransactionItem", transactionItemSchema);
 import mongoose from "mongoose";
 
@@ -65,4 +64,7 @@ transactionItemSchema.pre("save", async function (next) {
   next();
 });
 
-export const TransactionItem = mongoose.model("TransactionItem", transactionItemSchema);
+export const TransactionItem = mongoose.model(
+  "TransactionItem",
+  transactionItemSchema
+);
