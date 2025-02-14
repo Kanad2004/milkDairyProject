@@ -1,4 +1,5 @@
 import { Branch } from "../model/Branch.js";
+import { SubAdmin } from "../model/SubAdmin.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
 //!This is done
@@ -64,13 +65,31 @@ const updateBranchById = async (req, res) => {
 
 const deleteBranchById = async (req, res) => {
   const { branchId } = req.params;
-  const branch = await Branch.findOneAndDelete({ branchId });
+  // Find the branch (but do not delete yet)
+  const branch = await Branch.findOne({ branchId });
   if (!branch) {
     return res.status(400).send(new ApiResponse(400, {}, "Branch not found"));
   }
+
+  // Check if any sub-admins reference this branch
+  const subAdmins = await SubAdmin.find({ branch: branch._id });
+  if (subAdmins.length > 0) {
+    return res
+      .status(400)
+      .send(
+        new ApiResponse(
+          400,
+          {},
+          "Branch cannot be deleted because it has associated sub-admins"
+        )
+      );
+  }
+
+  // No sub-admin references; safe to delete
+  const deletedBranch = await Branch.findOneAndDelete({ branchId });
   return res
     .status(200)
-    .send(new ApiResponse(200, branch, "Branch deleted successfully"));
+    .send(new ApiResponse(200, deletedBranch, "Branch deleted successfully"));
 };
 
 export {
