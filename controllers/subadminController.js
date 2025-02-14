@@ -157,9 +157,11 @@ const addSubAdmin = async (req, res) => {
 
     console.log(savedSubAdmin._id);
 
-    const subAdminWithBranch = await SubAdmin.findById(
-      savedSubAdmin._id
-    ).populate("branch");
+    const subAdminWithBranch = await SubAdmin.findById(savedSubAdmin._id)
+      .populate("branch")
+      .populate("admin");
+
+    console.log(subAdminWithBranch);
 
     res
       .status(201)
@@ -186,7 +188,7 @@ const deleteSubAdmin = async (req, res) => {
 
 // Get all SubAdmins (Admin-only access)
 const getAllSubAdmins = asyncHandler(async (req, res) => {
-  const subAdmins = await SubAdmin.find();
+  const subAdmins = await SubAdmin.find().populate("branch").populate("admin");
   return res
     .status(200)
     .send(new ApiResponse(200, subAdmins, "SubAdmins found"));
@@ -202,6 +204,76 @@ const getSubAdminById = asyncHandler(async (req, res) => {
   return res.status(200).send(new ApiResponse(200, subAdmin, "SubAdmin found"));
 });
 
+const updateSubAdmin = asyncHandler(async (req, res) => {
+  const { subAdminId } = req.params;
+  const { subAdminName, mobileNumber, address, subAdminPassword, branchId } =
+    req.body;
+
+  // Build the update fields object
+  const updateFields = {};
+
+  if (subAdminName) updateFields.subAdminName = subAdminName;
+  if (mobileNumber) updateFields.mobileNumber = mobileNumber;
+  if (address) updateFields.address = address;
+  if (subAdminPassword) updateFields.subAdminPassword = subAdminPassword; // Consider hashing if needed
+
+  // Debug: log the received branchId value
+  if (branchId) {
+    console.log("Received branchId from request:", branchId);
+    // Convert branchId from string to number since your Branch schema uses a Number
+    const branchIdNum = Number(branchId);
+    console.log("Converted branchId to number:", branchIdNum);
+
+    // Look up the branch by its branchId field
+    const existingBranch = await Branch.findOne({ branchId: branchIdNum });
+    if (!existingBranch) {
+      console.log("No branch found for branchId:", branchIdNum);
+      return res.status(400).json({ message: "Branch does not exist!" });
+    }
+    updateFields.branch = existingBranch._id;
+  }
+
+  // Handle profile picture update if a new file is provided
+  if (req.file && req.file.path) {
+    const profilePictureImg = await uploadOnCloudinary(req.file.path);
+    if (!profilePictureImg || !profilePictureImg.url) {
+      throw new ApiError(
+        400,
+        "Error while uploading new ProfileImage on Cloudinary"
+      );
+    }
+    updateFields.profilePicture = profilePictureImg.url;
+
+    // Delete the file from the server after upload
+    fs.unlink(req.file.path, (err) => {
+      if (err) {
+        console.error(`Failed to delete uploaded file: ${err.message}`);
+      } else {
+        console.log("Uploaded file deleted successfully from server");
+      }
+    });
+  }
+
+  // Update the sub-admin document and populate branch and admin fields
+  const updatedSubAdmin = await SubAdmin.findByIdAndUpdate(
+    subAdminId,
+    { $set: updateFields },
+    { new: true, runValidators: true }
+  )
+    .populate("branch")
+    .populate("admin");
+
+  if (!updatedSubAdmin) {
+    throw new ApiError(404, "SubAdmin not found");
+  }
+
+  res
+    .status(200)
+    .send(
+      new ApiResponse(200, updatedSubAdmin, "SubAdmin updated successfully")
+    );
+});
+
 export {
   subAdminLogin,
   subAdminLogout,
@@ -209,4 +281,5 @@ export {
   deleteSubAdmin,
   getAllSubAdmins,
   getSubAdminById,
+  updateSubAdmin,
 };

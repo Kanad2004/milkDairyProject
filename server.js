@@ -9,6 +9,7 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import farmerRouter from "./routes/farmerRouter.js";
 import cors from "cors";
+import mongoose from "mongoose";
 
 const app = express();
 app.use(
@@ -41,6 +42,9 @@ app.use("/api/v1/product", productRouter);
 app.use("/api/v1/farmer", farmerRouter);
 
 // Connect to MongoDB and start the server
+
+// mongoose.set("strictPopulate", false);
+
 connectDB()
   .then(() => {
     app.listen(process.env.PORT || 8000, () => {
