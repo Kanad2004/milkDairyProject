@@ -8,7 +8,8 @@ import path from "path";
 import fs from "fs";
 
 const addFarmer = asyncHandler(async (req, res) => {
-  const { farmerName, mobileNumber, address } = req.body;
+  const { farmerName, mobileNumber, address, milkType, gender, joiningDate } =
+    req.body;
   const subAdmin = req.subAdmin._id;
   if ([farmerName, mobileNumber, address].some((field) => field?.trim === "")) {
     throw new ApiError(400, "All Fields are required ");

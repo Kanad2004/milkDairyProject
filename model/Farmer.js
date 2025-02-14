@@ -15,10 +15,22 @@ const farmerSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    admin: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
+    milkType: {
+      type: String,
+      required: true,
     },
+    gender: {
+      type: String,
+      required: true,
+    },
+    joiningDate: {
+      type: Date,
+      required: true,
+    },
+    // admin: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "Admin",
+    // },
     subAdmin: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "SubAdmin",
