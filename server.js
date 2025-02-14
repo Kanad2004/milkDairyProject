@@ -11,6 +11,7 @@ import dotenv from "dotenv";
 import farmerRouter from "./routes/farmerRouter.js";
 import newofferRouter from "./routes/newofferRouter.js";
 import cors from "cors";
+import mongoose from "mongoose";
 
 const app = express();
 app.use(
@@ -45,11 +46,15 @@ app.use("/api/v1/new-offer" , newofferRouter);
 
 // Connect to MongoDB and start the server
 
+<<<<<<< HEAD
 cloudinary.config({ 
   cloud_name: process.env.CLOUD_NAME, 
   api_key: process.env.API_KEY, 
   api_secret: process.env.API_SECRET
 });
+=======
+// mongoose.set("strictPopulate", false);
+>>>>>>> 6e37f7e21e32364caa1b66950ac035b30a93aa34
 
 connectDB()
   .then(() => {
