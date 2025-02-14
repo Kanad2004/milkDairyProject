@@ -40,8 +40,8 @@ newofferRouter.post(
 // newofferRouter.post("/update-offer-img" , upload.single("link") , updateOfferImage)
 newofferRouter.get(
   "/get-all-offers",
-  authenticateAdmin,
-  authorizeRoleAdmin(["Admin"]),
+  // authenticateAdmin,
+  // authorizeRoleAdmin(["Admin"]),
   getAllOffers
 );
 
