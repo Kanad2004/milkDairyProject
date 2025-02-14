@@ -1,22 +1,16 @@
-  import { asyncHandler } from "../utils/asyncHandler.js";
-  import { ApiError } from "../utils/ApiError.js";
-  import { Admin } from "../model/Admin.js";
-  import { ApiResponse } from "../utils/ApiResponse.js";
-  import { SubAdmin } from "../model/SubAdmin.js";
-  import { Branch } from "../model/Branch.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
+import { Admin } from "../model/Admin.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { SubAdmin } from "../model/SubAdmin.js";
+import { Branch } from "../model/Branch.js";
 
   //do some changes in options object when you are going to test the login controller as well as in frontEnd part . . .
   //cookies are not set in the mobile application at the user end that's why here we are sending the accesstoken and refreshtoken in the response to the user
 
-<<<<<<< HEAD
 //we have to use secure equal to true in the production
 const login = asyncHandler(async (req, res) => {
   const { adminMobileNumber, adminPassword } = req.body;
-=======
-  //!This is done
-  const login = asyncHandler(async (req, res) => {
-    const { adminMobileNumber, adminPassword } = req.body;
->>>>>>> 6e37f7e21e32364caa1b66950ac035b30a93aa34
 
     if (!adminMobileNumber || !adminPassword) {
       throw new ApiError(400, "Mobile Number and Password are required");
@@ -125,52 +119,4 @@ const login = asyncHandler(async (req, res) => {
     }
   });
 
-<<<<<<< HEAD
-  const options = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-  };
-
-  return res
-    .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
-    .json(new ApiResponse(200, {}, "Admin logged out"));
-});
-
-//!This is done
-const addAdmin = asyncHandler(async (req, res) => {
-  try {
-    const { adminName, adminMobileNumber, adminPassword } = req.body;
-
-    // Check if the admin already exists
-    const adminExists = await Admin.findOne({ adminMobileNumber });
-    if (adminExists) {
-      return res.status(400).json({ message: "Admin already exists!" });
-    }
-
-    // Create the new admin
-    const newAdmin = new Admin({
-      adminName,
-      adminMobileNumber,
-      adminPassword,
-      role: "Admin", // Set the role as admin
-    });
-
-    await newAdmin.save();
-    return res
-      .status(200)
-      .json(
-        new ApiResponse(200, { admin: newAdmin }, "Admin added successfully")
-      );
-  } catch (err) {
-    console.error(err);
-    throw new ApiError(500, "Error while adding the admin");
-  }
-});
-
 export { login, logoutAdmin, addAdmin };
-=======
-  export { login, logoutAdmin, addAdmin };
->>>>>>> 6e37f7e21e32364caa1b66950ac035b30a93aa34
