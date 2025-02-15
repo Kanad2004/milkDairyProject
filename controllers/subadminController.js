@@ -114,8 +114,12 @@ const addSubAdmin = async (req, res) => {
       branchId: branchId,
     });
 
-    if (!existingBranch) {
-      return res.status(400).json({ message: "Branch does not exist!" });
+    const subAdmin = await SubAdmin.findOne({ branch: existingBranch._id });
+
+    if (subAdmin) {
+      return res
+        .status(400)
+        .json({ message: "SubAdmin with same branch already exists!" });
     }
 
     const profilePictureImg = await uploadOnCloudinary(profilePicture);

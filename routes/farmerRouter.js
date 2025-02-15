@@ -1,12 +1,12 @@
 import express from "express";
 import {
   addFarmer,
-  addMilk,
   deleteFarmer,
   exportFarmerDetail,
   getAllfarmers,
   updateFarmer,
 } from "../controllers/farmerController.js";
+
 const farmerRouter = express.Router();
 import {
   authenticateAdmin,
@@ -27,13 +27,6 @@ farmerRouter.get(
   authenticateSubAdmin,
   authorizeRoleSubAdmin(["subAdmin"]),
   getAllfarmers
-);
-
-farmerRouter.patch(
-  "/add-milk",
-  authenticateSubAdmin,
-  authorizeRoleSubAdmin(["subAdmin"]),
-  addMilk
 );
 
 farmerRouter.delete(

@@ -12,6 +12,7 @@ import farmerRouter from "./routes/farmerRouter.js";
 import newofferRouter from "./routes/newofferRouter.js";
 import cors from "cors";
 import mongoose from "mongoose";
+import milkRouter from "./routes/milkRouter.js";
 
 const app = express();
 app.use(
@@ -43,13 +44,14 @@ app.use("/api/v1/customer", farmerRouter);
 app.use("/api/v1/product", productRouter);
 app.use("/api/v1/farmer", farmerRouter);
 app.use("/api/v1/new-offer", newofferRouter);
+app.use("/api/v1/milk", milkRouter);
 
 // Connect to MongoDB and start the server
 
-cloudinary.config({ 
-  cloud_name: process.env.CLOUD_NAME, 
-  api_key: process.env.API_KEY, 
-  api_secret: process.env.API_SECRET
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET,
 });
 
 connectDB()

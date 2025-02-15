@@ -118,41 +118,6 @@ const updateFarmer = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedFarmer, "Farmer updated successfully"));
 });
 
-const addMilk = asyncHandler(async (req, res) => {
-  const { farmerNumber, transactionDate, transactionAmount, milkQuantity } =
-    req.body;
-
-  const farmer = await Farmer.findOne({ mobileNumber: farmerNumber });
-
-  if (!farmer) {
-    throw new ApiError(404, "Enter farmer mobile not found");
-  }
-
-  console.log("Transaction Date:", transactionDate);
-  console.log("Transaction Amount:", transactionAmount);
-  console.log("Milk Quntity:", milkQuantity);
-
-  if (!transactionDate || !transactionAmount || !milkQuantity) {
-    throw new ApiError(400, "All fields are required");
-  }
-
-  if (transactionAmount < 0 || milkQuantity < 0) {
-    throw new ApiError(400, "Amount and Quntity cannot be negative");
-  }
-
-  farmer.transaction.push({
-    transactionDate,
-    transactionAmount,
-    milkQuantity,
-  });
-
-  await farmer.save();
-
-  return res
-    .status(200)
-    .send(new ApiResponse(200, farmer, "Milk added successfully"));
-});
-
 const deleteFarmer = async (req, res) => {
   const { id } = req.params;
   const subAdminId = req.subAdmin._id;
@@ -220,7 +185,6 @@ const exportFarmerDetail = async (req, res) => {
 export {
   addFarmer,
   getAllfarmers,
-  addMilk,
   deleteFarmer,
   exportFarmerDetail,
   updateFarmer,
