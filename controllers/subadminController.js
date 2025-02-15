@@ -93,86 +93,78 @@ const subAdminLogout = asyncHandler(async (req, res) => {
 });
 
 const addSubAdmin = async (req, res) => {
-  try {
-    const { subAdminName, mobileNumber, address, subAdminPassword, branchId } =
-      req.body;
+  const { subAdminName, mobileNumber, address, subAdminPassword, branchId } =
+    req.body;
 
-    const profilePicture = req?.file?.path;
+  const profilePicture = req?.file?.path;
 
-    if (!profilePicture) {
-      throw new ApiError(400, "Cover Img is missing");
-    }
-
-    // Check if the subadmin already exists
-    const subAdminExists = await SubAdmin.findOne({ mobileNumber });
-    if (subAdminExists) {
-      return res.status(400).json({ message: "SubAdmin already exists!" });
-    }
-
-    // Find or create the branch
-    const existingBranch = await Branch.findOne({
-      branchId: branchId,
-    });
-
-    const subAdmin = await SubAdmin.findOne({ branch: existingBranch._id });
-
-    if (subAdmin) {
-      return res
-        .status(400)
-        .json({ message: "SubAdmin with same branch already exists!" });
-    }
-
-    const profilePictureImg = await uploadOnCloudinary(profilePicture);
-
-    if (!profilePictureImg.url) {
-      throw new ApiError(
-        400,
-        "Error while uploading ProfileImage on cloudinary"
-      );
-    }
-    fs.unlink(profilePicture, (err) => {
-      if (err) {
-        console.error(
-          `Failed to delete uploaded profilePicture: ${err.message}`
-        );
-      } else {
-        console.log("Uploaded profilePicture deleted successfully from server");
-      }
-    });
-
-    // Create the new subadmin
-    const newSubAdmin = new SubAdmin({
-      subAdminName,
-      mobileNumber,
-      profilePicture: profilePictureImg.url,
-      address,
-      subAdminPassword, // Use hashedPassword here if hashing
-      branch: existingBranch._id,
-      admin: req?.admin?._id,
-      role: "subAdmin",
-    });
-
-    // Save the subadmin to the database
-    const savedSubAdmin = await newSubAdmin.save();
-
-    console.log(savedSubAdmin._id);
-
-    const subAdminWithBranch = await SubAdmin.findById(savedSubAdmin._id)
-      .populate("branch")
-      .populate("admin");
-
-    console.log(subAdminWithBranch);
-
-    res
-      .status(201)
-      .send(
-        new ApiResponse(200, subAdminWithBranch, "SubAdmin added successfully!")
-      );
-  } catch (err) {
-    console.error(err);
-    res.status(500).json(new ApiError(500, "Error adding subadmin"));
+  if (!profilePicture) {
+    throw new ApiError(400, "Cover Img is missing");
   }
+
+  // Check if the subadmin already exists
+  const subAdminExists = await SubAdmin.findOne({ mobileNumber });
+  if (subAdminExists) {
+    return res.status(400).json({ message: "SubAdmin already exists!" });
+  }
+
+  // Find or create the branch
+  const existingBranch = await Branch.findOne({
+    branchId: branchId,
+  });
+
+  const subAdmin = await SubAdmin.findOne({ branch: existingBranch._id });
+
+  if (subAdmin) {
+    return res
+      .status(400)
+      .json({ message: "SubAdmin with same branch already exists!" });
+  }
+
+  const profilePictureImg = await uploadOnCloudinary(profilePicture);
+
+  if (!profilePictureImg.url) {
+    throw new ApiError(400, "Error while uploading ProfileImage on cloudinary");
+  }
+  fs.unlink(profilePicture, (err) => {
+    if (err) {
+      console.error(`Failed to delete uploaded profilePicture: ${err.message}`);
+    } else {
+      console.log("Uploaded profilePicture deleted successfully from server");
+    }
+  });
+
+  // Create the new subadmin
+  const newSubAdmin = new SubAdmin({
+    subAdminName,
+    mobileNumber,
+    profilePicture: profilePictureImg.url,
+    address,
+    subAdminPassword, // Use hashedPassword here if hashing
+    branch: existingBranch._id,
+    admin: req?.admin?._id,
+    role: "subAdmin",
+  });
+
+  // Save the subadmin to the database
+  const savedSubAdmin = await newSubAdmin.save();
+
+  console.log(savedSubAdmin._id);
+
+  const subAdminWithBranch = await SubAdmin.findById(savedSubAdmin._id)
+    .populate("branch")
+    .populate("admin");
+
+  console.log(subAdminWithBranch);
+
+  res
+    .status(201)
+    .send(
+      new ApiResponse(200, subAdminWithBranch, "SubAdmin added successfully!")
+    );
 };
+
+// Check if the subadmin already exists
 
 const deleteSubAdmin = async (req, res) => {
   const { subAdminId } = req.params;
