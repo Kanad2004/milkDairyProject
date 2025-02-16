@@ -15,10 +15,11 @@ loanRouter.put('/update-loan/:mobileNumber',authenticateSubAdmin, authorizeRoleS
 //Routes for Admin
 loanRouter.get('/get-all-loans',authenticateAdmin, authorizeRoleAdmin(['Admin']),  getAllLoans);
 loanRouter.get('/get-loan/:mobileNumber', authenticateAdmin, authorizeRoleAdmin(['Admin']), getLoanByMobileNumber);
+
+
 // Route to generate loan report for all farmers
 loanRouter.get("/loans/report",authenticateAdmin, authorizeRoleAdmin(['Admin']), generateLoanReport);
-
-// Route to generate loan report by farmer ID
+// Route to generate loan report by farmer mobile number
 loanRouter.get("/loans/report/:mobileNumber",authenticateAdmin, authorizeRoleAdmin(['Admin']), generateLoanReportByMobileNumber);
 
 export default loanRouter;

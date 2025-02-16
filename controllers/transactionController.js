@@ -162,7 +162,7 @@ export const saveTransaction = async (req, res) => {
           return res.status(404).send(new ApiError(404, "Some transaction items not found"));
       }
 
-      if (!transactionItem) {
+      if (!transactionItems) {
         return res
           .status(404)
           .send(new ApiError(404, `Transaction item ${itemId} not found`));
@@ -193,6 +193,11 @@ export const saveTransaction = async (req, res) => {
     return res.status(500).send(new ApiError(500, "Internal server error"));
   }
 };
+
+//update trnsaction 
+
+
+
 
 // delete transaction 
 export const deleteTransaction = async (req, res) => {

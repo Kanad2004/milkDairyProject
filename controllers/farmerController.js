@@ -33,7 +33,10 @@ const addFarmer = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, newfarmer, "farmer Registered Successfully ! "));
 });
 
-const getAllfarmers = asyncHandler(async (req, res) => {});
 
-export { addFarmer, getAllfarmers };
+
+
+
+
+
 
