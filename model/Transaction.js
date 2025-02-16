@@ -73,4 +73,20 @@ const transactionSchema = new mongoose.Schema(
   }
 );
 
+transactionSchema.pre("save", async function (next) {
+  if (this.items && this.items.length > 0) {
+    const items = await mongoose.model("TransactionItem").find({ _id: { $in: this.items } }).populate("product");
+    
+    this.amount = items.reduce((total, item) => {
+      if (item.product && item.product.productPrice) {
+        return total + item.quantity * item.product.productPrice;
+      }
+      return total;
+    }, 0);
+  }
+  next();
+});
+
 export const Transaction = mongoose.model("Transaction", transactionSchema);
+
+

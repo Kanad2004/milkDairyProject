@@ -3,10 +3,11 @@
 // Farmer transaction report 
 
 
-import { Farmer } from "../models/Farmer.js";
+import { Farmer } from "../model/Farmer.js";
 import moment from "moment";
 import XLSX from "xlsx";
 import fs from "fs";
+
 
 /**
  * @desc Generate Excel report for farmer transactions

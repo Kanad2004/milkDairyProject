@@ -256,7 +256,7 @@ export const getAllLoans = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, loans, "All loans fetched successfully"));
 });
 
-export const getLoanByNumber = asyncHandler(async (req, res) => {
+export const getLoanByMobileNumber = asyncHandler(async (req, res) => {
     const { mobileNumber } = req.params;
 
     const loan = await Farmer.findOne({ "loan._id": mobileNumber }).select("loan");
