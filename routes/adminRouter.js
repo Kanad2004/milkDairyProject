@@ -3,6 +3,7 @@ import {
   login,
   logoutAdmin,
   addAdmin,
+  getAdmin,
 } from "../controllers/adminController.js";
 import { authenticateAdmin, authorizeRoleAdmin } from "../middlewares/auth.js";
 
@@ -20,6 +21,13 @@ adminRouter.post(
   authenticateAdmin,
   authorizeRoleAdmin(["Admin"]),
   logoutAdmin
+);
+
+adminRouter.get(
+  "/get-admin",
+  authenticateAdmin,
+  authorizeRoleAdmin(["Admin"]),
+  getAdmin
 );
 
 export default adminRouter;

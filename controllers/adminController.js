@@ -119,4 +119,19 @@ const addAdmin = asyncHandler(async (req, res) => {
   }
 });
 
-export { login, logoutAdmin, addAdmin };
+const getAdmin = asyncHandler(async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.admin._id).select("-adminPassword");
+    if (!admin) {
+      throw new ApiError(404, "Admin not found");
+    }
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { admin }, "Admin found successfully"));
+  } catch (err) {
+    console.error(err);
+    throw new ApiError(500, "Error while getting the admin");
+  }
+});
+
+export { login, logoutAdmin, addAdmin, getAdmin };
