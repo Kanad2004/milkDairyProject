@@ -8,6 +8,7 @@ import { Category } from "../model/Category.js";
 export const addCategory = async (req, res) => {
   try {
     const { categoryName, categoryDescription, subAdmin } = req.body;
+    
 
     // Check if the category already exists
     const existingCategory = await Category.findOne({ categoryName });
