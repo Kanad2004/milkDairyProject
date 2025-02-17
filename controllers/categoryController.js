@@ -2,12 +2,16 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { Admin } from "../model/Admin.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { Category } from "../model/Category.js"; 
+import { Category } from "../model/Category.js";
 
 // Add a new category
 export const addCategory = async (req, res) => {
   try {
     const { categoryName, categoryDescription } = req.body;
+
+    if (!categoryName || !categoryDescription) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
 
     // Check if the category already exists
     const existingCategory = await Category.findOne({ categoryName });
@@ -17,13 +21,17 @@ export const addCategory = async (req, res) => {
 
     const newCategory = new Category({
       categoryName,
-      categoryDescription,
-      subAdmin : req.subAdmin._id,
+      categoryDescription: categoryDescription,
+      subAdmin: req.subAdmin._id,
       products: [], // Initially empty
     });
 
     await newCategory.save();
-    res.status(201).send(new ApiResponse(201 , newCategory , "New Category added successfully"));
+    res
+      .status(201)
+      .send(
+        new ApiResponse(201, newCategory, "New Category added successfully")
+      );
   } catch (error) {
     res.status(500).json({ message: "Error adding category", error });
   }
@@ -39,7 +47,9 @@ export const deleteCategory = async (req, res) => {
       return res.status(404).json({ message: "Category not found" });
     }
 
-    res.status(200).send(new ApiResponse(200 , {} , 'Category deleted successfully'));
+    res
+      .status(200)
+      .send(new ApiResponse(200, {}, "Category deleted successfully"));
   } catch (error) {
     res.status(500).json({ message: "Error deleting category", error });
   }
@@ -61,7 +71,11 @@ export const updateCategory = async (req, res) => {
       return res.status(404).json({ message: "Category not found" });
     }
 
-    res.status(200).send(new ApiResponse(200 , updateCategory , "Category updated successfully"));
+    res
+      .status(200)
+      .send(
+        new ApiResponse(200, updateCategory, "Category updated successfully")
+      );
   } catch (error) {
     res.status(500).json({ message: "Error updating category", error });
   }
@@ -70,7 +84,11 @@ export const updateCategory = async (req, res) => {
 export const getAllCategories = async (req, res) => {
   try {
     const categories = await Category.find().populate("subAdmin"); // Populating subAdmin details if needed
-    res.status(200).send(new ApiResponse(200 , categories , "Categories fetched successfully"));
+    res
+      .status(200)
+      .send(
+        new ApiResponse(200, categories, "Categories fetched successfully")
+      );
   } catch (error) {
     res.status(500).json({ message: "Error fetching categories", error });
   }
@@ -86,7 +104,9 @@ export const getCategoryById = async (req, res) => {
       return res.status(404).json({ message: "Category not found" });
     }
 
-    res.status(200).send(new ApiResponse(200 , category , "Category fetched successfully"));
+    res
+      .status(200)
+      .send(new ApiResponse(200, category, "Category fetched successfully"));
   } catch (error) {
     res.status(500).json({ message: "Error fetching category", error });
   }
@@ -125,7 +145,9 @@ export const deleteProductFromCategory = async (req, res) => {
     }
 
     // Filter out the product to remove it
-    category.products = category.products.filter((product) => product._id.toString() !== productId);
+    category.products = category.products.filter(
+      (product) => product._id.toString() !== productId
+    );
     await category.save();
 
     res.status(200).json({ message: "Product deleted successfully", category });
@@ -147,13 +169,20 @@ export const updateProductInCategory = async (req, res) => {
     }
 
     // Find the product in the category
-    const productIndex = category.products.findIndex((product) => product._id.toString() === productId);
+    const productIndex = category.products.findIndex(
+      (product) => product._id.toString() === productId
+    );
     if (productIndex === -1) {
-      return res.status(404).json({ message: "Product not found in this category" });
+      return res
+        .status(404)
+        .json({ message: "Product not found in this category" });
     }
 
     // Update the product data while keeping other fields intact
-    category.products[productIndex] = { ...category.products[productIndex], ...updatedProductData };
+    category.products[productIndex] = {
+      ...category.products[productIndex],
+      ...updatedProductData,
+    };
     await category.save();
 
     res.status(200).json({ message: "Product updated successfully", category });

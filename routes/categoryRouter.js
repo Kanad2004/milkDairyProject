@@ -25,14 +25,14 @@ categoryRouter.post(
 
 //!This is done
 categoryRouter.delete(
-  "/delete-cateory/:categoryId",
+  "/delete-category/:categoryId",
   authenticateSubAdmin,
-  authorizeRoleSubAdmin(["SubAdmin"]),
+  authorizeRoleSubAdmin(["subAdmin"]),
   deleteCategory
 );
 
 //!This is done
-categoryRouter.put(
+categoryRouter.patch(
   "/update-category/:categoryId",
   authenticateSubAdmin,
   authorizeRoleSubAdmin(["subAdmin"]),
@@ -49,48 +49,27 @@ categoryRouter.get(
 categoryRouter.get(
   "/get-categorybyId/:categoryId",
   authenticateSubAdmin,
-  authorizeRoleSubAdmin(["SubAdmin"]),
-  getCategoryById
-);
-
-categoryRouter.put(
-  "/get-categorybyId",
-  authenticateSubAdmin,
   authorizeRoleSubAdmin(["subAdmin"]),
-  getCategoryById
-);
-
-categoryRouter.put(
-  "/get-categorybyId",
-  authenticateSubAdmin,
-  authorizeRoleSubAdmin(["SubAdmin"]),
-  getCategoryById
-);
-
-categoryRouter.get(
-  "/get-categorybyId",
-  authenticateSubAdmin,
-  authorizeRoleSubAdmin(["SubAdmin"]),
   getCategoryById
 );
 
 categoryRouter.post(
   "/:categoryId/product/add",
   authenticateSubAdmin,
-  authorizeRoleSubAdmin(["SubAdmin"]),
+  authorizeRoleSubAdmin(["subAdmin"]),
   addProductToCategory
 );
 
 categoryRouter.delete(
   "/:categoryId/product/delete/:productId",
   authenticateSubAdmin,
-  authorizeRoleSubAdmin(["SubAdmin"]),
+  authorizeRoleSubAdmin(["subAdmin"]),
   deleteProductFromCategory
 );
 categoryRouter.put(
   "/:categoryId/product/update/:productId",
   authenticateSubAdmin,
-  authorizeRoleSubAdmin(["SubAdmin"]),
+  authorizeRoleSubAdmin(["subAdmin"]),
   updateProductInCategory
 );
 
