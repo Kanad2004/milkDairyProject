@@ -45,7 +45,7 @@ const embeddedProductSchema = new mongoose.Schema(
   }
 );
 
-productSchema.pre("save", function (next) {
+embeddedProductSchema.pre("save", function (next) {
   // Set productInstock to true if quantity is greater than 0, otherwise false.
   this.productInstock = this.quantity > 0;
   next();
