@@ -5,6 +5,9 @@ import {
   updateCategory,
   getAllCategories,
   getCategoryById,
+  addProductToCategory,
+  deleteProductFromCategory,
+  updateProductInCategory,
 } from "../controllers/categoryController.js";
 import {
   authenticateSubAdmin,
@@ -22,15 +25,15 @@ categoryRouter.post(
 
 //!This is done
 categoryRouter.delete(
-  "/delete-cateory",
+  "/delete-cateory/:categoryId",
   authenticateSubAdmin,
-  authorizeRoleSubAdmin(["subAdmin"]),
+  authorizeRoleSubAdmin(["SubAdmin"]),
   deleteCategory
 );
 
 //!This is done
 categoryRouter.put(
-  "/update-category",
+  "/update-category/:categoryId",
   authenticateSubAdmin,
   authorizeRoleSubAdmin(["subAdmin"]),
   updateCategory
@@ -43,11 +46,52 @@ categoryRouter.get(
   getAllCategories
 );
 
+categoryRouter.get(
+  "/get-categorybyId/:categoryId",
+  authenticateSubAdmin,
+  authorizeRoleSubAdmin(["SubAdmin"]),
+  getCategoryById
+);
+
 categoryRouter.put(
   "/get-categorybyId",
   authenticateSubAdmin,
   authorizeRoleSubAdmin(["subAdmin"]),
   getCategoryById
+);
+
+categoryRouter.put(
+  "/get-categorybyId",
+  authenticateSubAdmin,
+  authorizeRoleSubAdmin(["SubAdmin"]),
+  getCategoryById
+);
+
+categoryRouter.get(
+  "/get-categorybyId",
+  authenticateSubAdmin,
+  authorizeRoleSubAdmin(["SubAdmin"]),
+  getCategoryById
+);
+
+categoryRouter.post(
+  "/:categoryId/product/add",
+  authenticateSubAdmin,
+  authorizeRoleSubAdmin(["SubAdmin"]),
+  addProductToCategory
+);
+
+categoryRouter.delete(
+  "/:categoryId/product/delete/:productId",
+  authenticateSubAdmin,
+  authorizeRoleSubAdmin(["SubAdmin"]),
+  deleteProductFromCategory
+);
+categoryRouter.put(
+  "/:categoryId/product/update/:productId",
+  authenticateSubAdmin,
+  authorizeRoleSubAdmin(["SubAdmin"]),
+  updateProductInCategory
 );
 
 export default categoryRouter;
