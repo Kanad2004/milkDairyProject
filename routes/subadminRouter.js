@@ -17,10 +17,10 @@ import {
 import { upload } from "../middlewares/uploadFile.middleware.js";
 import { updateBranchById } from "../controllers/branchController.js";
 
-const subadminRouter = express.Router();
+const subAdminRouter = express.Router();
 
 //!This is done
-subadminRouter.post(
+subAdminRouter.post(
   "/addSubAdmin",
   authenticateAdmin,
   authorizeRoleAdmin(["Admin"]),
@@ -29,7 +29,7 @@ subadminRouter.post(
 );
 
 //!This is done
-subadminRouter.get(
+subAdminRouter.get(
   "/get-all-subadmins",
   authenticateAdmin,
   authorizeRoleAdmin(["Admin"]),
@@ -37,15 +37,15 @@ subadminRouter.get(
 );
 
 //!This is done
-subadminRouter.get(
+subAdminRouter.get(
   "/get/:subAdminId",
-  authenticateAdmin,
-  authorizeRoleAdmin("Admin"),
+  authenticateSubAdmin,
+  authorizeRoleSubAdmin("subAdmin"),
   getSubAdminById
 );
 
 //!This is done
-subadminRouter.delete(
+subAdminRouter.delete(
   "/delete/:subAdminId",
   authenticateAdmin,
   authorizeRoleAdmin("Admin"),
@@ -53,16 +53,16 @@ subadminRouter.delete(
 );
 
 //!This is done
-subadminRouter.post("/login", subAdminLogin);
+subAdminRouter.post("/login", subAdminLogin);
 
-subadminRouter.post(
+subAdminRouter.post(
   "/logout",
   authenticateSubAdmin,
   authorizeRoleSubAdmin(["subAdmin"]),
   subAdminLogout
 );
 
-subadminRouter.patch(
+subAdminRouter.patch(
   "/update/:subAdminId",
   authenticateAdmin,
   authorizeRoleAdmin(["Admin"]),
@@ -70,4 +70,4 @@ subadminRouter.patch(
   updateSubAdmin
 );
 
-export default subadminRouter;
+export default subAdminRouter;

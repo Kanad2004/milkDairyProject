@@ -1,10 +1,10 @@
 import express from "express";
 import adminRouter from "./routes/adminRouter.js";
-import subAdminRouter from "./routes/subAdminRouter.js";
+import subAdminRouter from "./routes/subadminRouter.js";
 import branchRouter from "./routes/branchRouter.js";
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
-import productRouter from "./routes/productRouter.js";
+// import productRouter from "./routes/productRouter.js";
 import connectDB from "./db/index.js";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
@@ -41,7 +41,7 @@ app.use("/api/v1/admin", adminRouter); // Prefixing all admin routes with /admin
 app.use("/api/v1/subadmin", subAdminRouter); // Prefixing all subadmin routes with /subadmin (if you're using subadmin routes)
 app.use("/api/v1/branch", branchRouter);
 app.use("/api/v1/customer", farmerRouter);
-app.use("/api/v1/product", productRouter);
+// app.use("/api/v1/product", productRouter);
 app.use("/api/v1/farmer", farmerRouter);
 app.use("/api/v1/new-offer", newofferRouter);
 app.use("/api/v1/milk", milkRouter);
