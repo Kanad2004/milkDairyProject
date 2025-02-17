@@ -7,7 +7,7 @@ import { Category } from "../model/Category.js";
 // Add a new category
 export const addCategory = async (req, res) => {
   try {
-    const { categoryName, categoryDescription, subAdmin } = req.body;
+    const { categoryName, categoryDescription } = req.body;
 
     // Check if the category already exists
     const existingCategory = await Category.findOne({ categoryName });
@@ -18,7 +18,7 @@ export const addCategory = async (req, res) => {
     const newCategory = new Category({
       categoryName,
       categoryDescription,
-      subAdmin,
+      subAdmin : req.subAdmin._id,
       products: [], // Initially empty
     });
 
@@ -89,5 +89,75 @@ export const getCategoryById = async (req, res) => {
     res.status(200).send(new ApiResponse(200 , category , "Category fetched successfully"));
   } catch (error) {
     res.status(500).json({ message: "Error fetching category", error });
+  }
+};
+
+// ✅ Add a product to a category
+export const addProductToCategory = async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const product = req.body; // Product details from request body
+
+    // Find the category
+    const category = await Category.findById(categoryId);
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
+    category.products.push(product); // Add product to the category's product list
+    await category.save();
+
+    res.status(201).json({ message: "Product added successfully", category });
+  } catch (error) {
+    res.status(500).json({ message: "Error adding product", error });
+  }
+};
+
+// ❌ Delete a product from a category
+export const deleteProductFromCategory = async (req, res) => {
+  try {
+    const { categoryId, productId } = req.params;
+
+    // Find the category
+    const category = await Category.findById(categoryId);
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
+    // Filter out the product to remove it
+    category.products = category.products.filter((product) => product._id.toString() !== productId);
+    await category.save();
+
+    res.status(200).json({ message: "Product deleted successfully", category });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting product", error });
+  }
+};
+
+// 🔄 Update a product inside a category
+export const updateProductInCategory = async (req, res) => {
+  try {
+    const { categoryId, productId } = req.params;
+    const updatedProductData = req.body;
+
+    // Find the category
+    const category = await Category.findById(categoryId);
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
+    // Find the product in the category
+    const productIndex = category.products.findIndex((product) => product._id.toString() === productId);
+    if (productIndex === -1) {
+      return res.status(404).json({ message: "Product not found in this category" });
+    }
+
+    // Update the product data while keeping other fields intact
+    category.products[productIndex] = { ...category.products[productIndex], ...updatedProductData };
+    await category.save();
+
+    res.status(200).json({ message: "Product updated successfully", category });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating product", error });
   }
 };
