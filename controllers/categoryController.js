@@ -67,5 +67,27 @@ export const updateCategory = async (req, res) => {
   }
 };
 
+export const getAllCategories = async (req, res) => {
+  try {
+    const categories = await Category.find().populate("subAdmin"); // Populating subAdmin details if needed
+    res.status(200).send(new ApiResponse(200 , categories , "Categories fetched successfully"));
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching categories", error });
+  }
+};
 
+// 🔍 Get a category by ID
+export const getCategoryById = async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const category = await Category.findById(categoryId).populate("subAdmin"); // Populating subAdmin details if needed
 
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
+    res.status(200).send(new ApiResponse(200 , category , "Category fetched successfully"));
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching category", error });
+  }
+};

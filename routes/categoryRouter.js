@@ -3,6 +3,8 @@ import {
     addCategory,
     deleteCategory,
     updateCategory,
+    getAllCategories,
+    getCategoryById
 } from "../controllers/categoryController.js";
 import { authenticateSubAdmin, authorizeRoleSubAdmin } from "../middlewares/auth.js";
 
@@ -19,6 +21,20 @@ categoryRouter.put(
   authenticateSubAdmin,
   authorizeRoleSubAdmin(["SubAdmin"]),
   updateCategory
+);
+
+categoryRouter.get(
+  "/get-all-categories",
+  authenticateSubAdmin,
+  authorizeRoleSubAdmin(["SubAdmin"]),
+  getAllCategories
+);
+
+categoryRouter.put(
+  "/get-categorybyId",
+  authenticateSubAdmin,
+  authorizeRoleSubAdmin(["SubAdmin"]),
+  getCategoryById
 );
 
 export default categoryRouter;
