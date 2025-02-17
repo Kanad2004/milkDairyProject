@@ -1,49 +1,44 @@
 import mongoose from "mongoose";
 
-const embeddedProductSchema = new mongoose.Schema(
-  {
-    productName: {
-      type: String,
-      required: true,
-    },
-    productPrice: {
-      type: Number,
-      required: true,
-    },
-    productImage: {
-      type: String,
-      required: true, // Uncomment if needed
-    },
-    // productDescription: {
-    //   type: String,
-    //   required: true, // Uncomment if needed
-    // },
-    snf: {
-      type: Number,
-      required: true,
-    },
-    fat: {
-      type: Number,
-      required: true,
-    },
-    productInstock: {
-      type: Boolean,
-      default: true,
-    },
-    quantity: {
-      type: Number,
-      required: true,
-      default: 0,
-    },
-    unit: {
-      type: Number,
-      required: true,
-    },
+const embeddedProductSchema = new mongoose.Schema({
+  productName: {
+    type: String,
+    required: true,
   },
-  {
-    _id: false, // Prevents automatic creation of an _id for each embedded product
-  }
-);
+  productPrice: {
+    type: Number,
+    required: true,
+  },
+  productImage: {
+    type: String,
+    required: true, // Uncomment if needed
+  },
+  // productDescription: {
+  //   type: String,
+  //   required: true, // Uncomment if needed
+  // },
+  snf: {
+    type: Number,
+    required: true,
+  },
+  fat: {
+    type: Number,
+    required: true,
+  },
+  productInstock: {
+    type: Boolean,
+    default: true,
+  },
+  quantity: {
+    type: Number,
+    required: true,
+    default: 0,
+  },
+  unit: {
+    type: Number,
+    required: true,
+  },
+});
 
 embeddedProductSchema.pre("save", function (next) {
   // Set productInstock to true if quantity is greater than 0, otherwise false.

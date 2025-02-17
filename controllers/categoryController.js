@@ -145,13 +145,14 @@ export const deleteProductFromCategory = async (req, res) => {
     }
 
     // Filter out the product to remove it
-    category.products = category.products.filter(
-      (product) => product._id.toString() !== productId
-    );
+    category.products = category.products.filter((product) => {
+      return product._id.toString() !== productId;
+    });
     await category.save();
 
     res.status(200).json({ message: "Product deleted successfully", category });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: "Error deleting product", error });
   }
 };
