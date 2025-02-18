@@ -13,6 +13,7 @@ import {
   authenticateSubAdmin,
   authorizeRoleSubAdmin,
 } from "../middlewares/auth.js";
+import { upload } from "../middlewares/uploadFile.middleware.js";
 
 const categoryRouter = express.Router();
 
@@ -57,6 +58,7 @@ categoryRouter.post(
   "/:categoryId/product/add",
   authenticateSubAdmin,
   authorizeRoleSubAdmin(["subAdmin"]),
+  upload.single("file"),
   addProductToCategory
 );
 
@@ -66,10 +68,11 @@ categoryRouter.delete(
   authorizeRoleSubAdmin(["subAdmin"]),
   deleteProductFromCategory
 );
-categoryRouter.put(
+categoryRouter.patch(
   "/:categoryId/product/update/:productId",
   authenticateSubAdmin,
   authorizeRoleSubAdmin(["subAdmin"]),
+  upload.single("file"),
   updateProductInCategory
 );
 

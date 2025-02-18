@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { Admin } from "../model/Admin.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Category } from "../model/Category.js";
+import { uploadOnCloudinary } from "../utils/CloudinaryUtility.js";
 
 // Add a new category
 export const addCategory = async (req, res) => {
@@ -118,17 +119,32 @@ export const addProductToCategory = async (req, res) => {
     const { categoryId } = req.params;
     const product = req.body; // Product details from request body
 
+    const profilePicture = req?.file?.path;
+
+    if (!profilePicture) {
+      throw new ApiError(400, "Cover Img is missing");
+    }
+
     // Find the category
     const category = await Category.findById(categoryId);
     if (!category) {
       return res.status(404).json({ message: "Category not found" });
     }
 
+    const profilePictureImg = await uploadOnCloudinary(profilePicture);
+
+    if (!profilePictureImg || !profilePictureImg.url) {
+      throw new ApiError(400, "Error while uploading coverImg on cloudinary");
+    }
+
+    product.productImage = profilePictureImg.url;
+
     category.products.push(product); // Add product to the category's product list
     await category.save();
 
     res.status(201).json({ message: "Product added successfully", category });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: "Error adding product", error });
   }
 };
@@ -161,7 +177,20 @@ export const deleteProductFromCategory = async (req, res) => {
 export const updateProductInCategory = async (req, res) => {
   try {
     const { categoryId, productId } = req.params;
-    const updatedProductData = req.body;
+    let updatedProductData = req.body;
+
+    const profileImage = req?.file?.path;
+
+    if (!profileImage) {
+      throw new ApiError(400, "Cover Img is missing");
+    }
+
+    const profileImageImg = await uploadOnCloudinary(profileImage);
+    if (!profileImageImg || !profileImageImg.url) {
+      throw new ApiError(400, "Error while uploading coverImg on cloudinary");
+    }
+
+    updatedProductData.productImage = profileImageImg.url;
 
     // Find the category
     const category = await Category.findById(categoryId);
@@ -188,6 +217,7 @@ export const updateProductInCategory = async (req, res) => {
 
     res.status(200).json({ message: "Product updated successfully", category });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: "Error updating product", error });
   }
 };
