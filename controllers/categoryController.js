@@ -239,55 +239,50 @@ export const updateProductInCategory = async (req, res) => {
     const { categoryId, productId } = req.params;
     let updatedProductData = req.body;
 
-    const profileImage = req?.file?.path;
-
-    if (!profileImage) {
-      throw new ApiError(400, "Cover Img is missing");
-    }
-
-    const profileImageImg = await uploadOnCloudinary(profileImage);
-    if (!profileImageImg || !profileImageImg.url) {
-      throw new ApiError(400, "Error while uploading coverImg on cloudinary");
-    }
-
-    updatedProductData.productImage = profileImageImg.url;
-
-    // Find the category
+    // Find the category first
     const category = await Category.findById(categoryId);
     if (!category) {
-      return res
-        .status(404)
-        .json(new ApiResponse(404, null, "Category not found"));
+      return res.status(404).json(new ApiResponse(404, null, "Category not found"));
     }
 
-    // Find the product in the category
+    // Find the product inside the category
     const productIndex = category.products.findIndex(
       (product) => product._id.toString() === productId
     );
+
     if (productIndex === -1) {
-      return res
-        .status(404)
-        .json(new ApiResponse(404, null, "Product not found in this category"));
+      return res.status(404).json(new ApiResponse(404, null, "Product not found in this category"));
     }
 
-    // Update the product data while keeping other fields intact
+    // Fetch the existing product data
+    const existingProduct = category.products[productIndex];
+
+    // Handle image upload only if a new file is provided
+    if (req.file?.path) {
+      const profileImageImg = await uploadOnCloudinary(req.file.path);
+      if (!profileImageImg?.url) {
+        throw new ApiError(400, "Error while uploading image to Cloudinary");
+      }
+      updatedProductData.productImage = profileImageImg.url;
+    } else {
+      // Retain the existing image if no new image is uploaded
+      updatedProductData.productImage = existingProduct.productImage;
+    }
+
+    // Merge existing product data with updated fields
     category.products[productIndex] = {
-      ...category.products[productIndex],
-      ...updatedProductData,
+      ...existingProduct.toObject(), // Convert Mongoose document to plain object
+      ...updatedProductData, // Override only provided fields
     };
+
+    // Save the updated category
     await category.save();
 
-    res
-      .status(200)
-      .json(new ApiResponse(200, category, "Product updated successfully"));
+    return res.status(200).json(new ApiResponse(200, category, "Product updated successfully"));
   } catch (error) {
     console.error(error);
-    if (error instanceof ApiError) {
-      return res
-        .status(error.status)
-        .json(new ApiResponse(error.status, null, error.message));
-    }
-    res.status(500).json(new ApiResponse(500, null, "Error updating product"));
+    const status = error instanceof ApiError ? error.status : 500;
+    return res.status(status).json(new ApiResponse(status, null, error.message || "Error updating product"));
   }
 };
 
