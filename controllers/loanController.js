@@ -99,7 +99,7 @@ const deductLoan = asyncHandler(async (req, res) => {
   console.log("req.params", req.params);
 
   const { loanId } = req.params;
-  console.log("loanId", loanId); 
+  console.log("loanId", loanId);
 
   const { loanAmount } = req.body;
 
