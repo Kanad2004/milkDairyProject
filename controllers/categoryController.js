@@ -11,18 +11,22 @@ export const addCategory = async (req, res) => {
     const { categoryName, categoryDescription } = req.body;
 
     if (!categoryName || !categoryDescription) {
-      return res.status(400).json({ message: "All fields are required" });
+      return res
+        .status(400)
+        .json(new ApiResponse(400, null, "All fields are required"));
     }
 
     // Check if the category already exists
     const existingCategory = await Category.findOne({ categoryName });
     if (existingCategory) {
-      return res.status(400).json({ message: "Category already exists" });
+      return res
+        .status(400)
+        .json(new ApiResponse(400, null, "Category already exists"));
     }
 
     const newCategory = new Category({
       categoryName,
-      categoryDescription: categoryDescription,
+      categoryDescription,
       subAdmin: req.subAdmin._id,
       products: [], // Initially empty
     });
@@ -30,11 +34,17 @@ export const addCategory = async (req, res) => {
     await newCategory.save();
     res
       .status(201)
-      .send(
+      .json(
         new ApiResponse(201, newCategory, "New Category added successfully")
       );
   } catch (error) {
-    res.status(500).json({ message: "Error adding category", error });
+    console.error(error);
+    if (error instanceof ApiError) {
+      return res
+        .status(error.status)
+        .json(new ApiResponse(error.status, null, error.message));
+    }
+    res.status(500).json(new ApiResponse(500, null, "Error adding category"));
   }
 };
 
@@ -45,14 +55,22 @@ export const deleteCategory = async (req, res) => {
 
     const deletedCategory = await Category.findByIdAndDelete(categoryId);
     if (!deletedCategory) {
-      return res.status(404).json({ message: "Category not found" });
+      return res
+        .status(404)
+        .json(new ApiResponse(404, null, "Category not found"));
     }
 
     res
       .status(200)
-      .send(new ApiResponse(200, {}, "Category deleted successfully"));
+      .json(new ApiResponse(200, {}, "Category deleted successfully"));
   } catch (error) {
-    res.status(500).json({ message: "Error deleting category", error });
+    console.error(error);
+    if (error instanceof ApiError) {
+      return res
+        .status(error.status)
+        .json(new ApiResponse(error.status, null, error.message));
+    }
+    res.status(500).json(new ApiResponse(500, null, "Error deleting category"));
   }
 };
 
@@ -69,16 +87,24 @@ export const updateCategory = async (req, res) => {
     );
 
     if (!updatedCategory) {
-      return res.status(404).json({ message: "Category not found" });
+      return res
+        .status(404)
+        .json(new ApiResponse(404, null, "Category not found"));
     }
 
     res
       .status(200)
-      .send(
-        new ApiResponse(200, updateCategory, "Category updated successfully")
+      .json(
+        new ApiResponse(200, updatedCategory, "Category updated successfully")
       );
   } catch (error) {
-    res.status(500).json({ message: "Error updating category", error });
+    console.error(error);
+    if (error instanceof ApiError) {
+      return res
+        .status(error.status)
+        .json(new ApiResponse(error.status, null, error.message));
+    }
+    res.status(500).json(new ApiResponse(500, null, "Error updating category"));
   }
 };
 
@@ -87,11 +113,19 @@ export const getAllCategories = async (req, res) => {
     const categories = await Category.find().populate("subAdmin"); // Populating subAdmin details if needed
     res
       .status(200)
-      .send(
+      .json(
         new ApiResponse(200, categories, "Categories fetched successfully")
       );
   } catch (error) {
-    res.status(500).json({ message: "Error fetching categories", error });
+    console.error(error);
+    if (error instanceof ApiError) {
+      return res
+        .status(error.status)
+        .json(new ApiResponse(error.status, null, error.message));
+    }
+    res
+      .status(500)
+      .json(new ApiResponse(500, null, "Error fetching categories"));
   }
 };
 
@@ -102,14 +136,22 @@ export const getCategoryById = async (req, res) => {
     const category = await Category.findById(categoryId).populate("subAdmin"); // Populating subAdmin details if needed
 
     if (!category) {
-      return res.status(404).json({ message: "Category not found" });
+      return res
+        .status(404)
+        .json(new ApiResponse(404, null, "Category not found"));
     }
 
     res
       .status(200)
-      .send(new ApiResponse(200, category, "Category fetched successfully"));
+      .json(new ApiResponse(200, category, "Category fetched successfully"));
   } catch (error) {
-    res.status(500).json({ message: "Error fetching category", error });
+    console.error(error);
+    if (error instanceof ApiError) {
+      return res
+        .status(error.status)
+        .json(new ApiResponse(error.status, null, error.message));
+    }
+    res.status(500).json(new ApiResponse(500, null, "Error fetching category"));
   }
 };
 
@@ -128,7 +170,9 @@ export const addProductToCategory = async (req, res) => {
     // Find the category
     const category = await Category.findById(categoryId);
     if (!category) {
-      return res.status(404).json({ message: "Category not found" });
+      return res
+        .status(404)
+        .json(new ApiResponse(404, null, "Category not found"));
     }
 
     const profilePictureImg = await uploadOnCloudinary(profilePicture);
@@ -142,10 +186,17 @@ export const addProductToCategory = async (req, res) => {
     category.products.push(product); // Add product to the category's product list
     await category.save();
 
-    res.status(201).json({ message: "Product added successfully", category });
+    res
+      .status(201)
+      .json(new ApiResponse(201, category, "Product added successfully"));
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Error adding product", error });
+    console.error(error);
+    if (error instanceof ApiError) {
+      return res
+        .status(error.status)
+        .json(new ApiResponse(error.status, null, error.message));
+    }
+    res.status(500).json(new ApiResponse(500, null, "Error adding product"));
   }
 };
 
@@ -157,19 +208,28 @@ export const deleteProductFromCategory = async (req, res) => {
     // Find the category
     const category = await Category.findById(categoryId);
     if (!category) {
-      return res.status(404).json({ message: "Category not found" });
+      return res
+        .status(404)
+        .json(new ApiResponse(404, null, "Category not found"));
     }
 
     // Filter out the product to remove it
-    category.products = category.products.filter((product) => {
-      return product._id.toString() !== productId;
-    });
+    category.products = category.products.filter(
+      (product) => product._id.toString() !== productId
+    );
     await category.save();
 
-    res.status(200).json({ message: "Product deleted successfully", category });
+    res
+      .status(200)
+      .json(new ApiResponse(200, category, "Product deleted successfully"));
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Error deleting product", error });
+    console.error(error);
+    if (error instanceof ApiError) {
+      return res
+        .status(error.status)
+        .json(new ApiResponse(error.status, null, error.message));
+    }
+    res.status(500).json(new ApiResponse(500, null, "Error deleting product"));
   }
 };
 
@@ -195,7 +255,9 @@ export const updateProductInCategory = async (req, res) => {
     // Find the category
     const category = await Category.findById(categoryId);
     if (!category) {
-      return res.status(404).json({ message: "Category not found" });
+      return res
+        .status(404)
+        .json(new ApiResponse(404, null, "Category not found"));
     }
 
     // Find the product in the category
@@ -205,7 +267,7 @@ export const updateProductInCategory = async (req, res) => {
     if (productIndex === -1) {
       return res
         .status(404)
-        .json({ message: "Product not found in this category" });
+        .json(new ApiResponse(404, null, "Product not found in this category"));
     }
 
     // Update the product data while keeping other fields intact
@@ -215,9 +277,97 @@ export const updateProductInCategory = async (req, res) => {
     };
     await category.save();
 
-    res.status(200).json({ message: "Product updated successfully", category });
+    res
+      .status(200)
+      .json(new ApiResponse(200, category, "Product updated successfully"));
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Error updating product", error });
+    console.error(error);
+    if (error instanceof ApiError) {
+      return res
+        .status(error.status)
+        .json(new ApiResponse(error.status, null, error.message));
+    }
+    res.status(500).json(new ApiResponse(500, null, "Error updating product"));
+  }
+};
+
+// Controller to update the stock (quantity) of a product in a category based on operation and value
+export const updateProductStock = async (req, res) => {
+  try {
+    const { categoryId, productId } = req.params;
+    const { operation, value } = req.body;
+
+    // Validate input
+    if (!operation || value === undefined) {
+      return res
+        .status(400)
+        .json(
+          new ApiResponse(
+            400,
+            null,
+            "Both operation and value fields are required"
+          )
+        );
+    }
+    if (operation !== "add" && operation !== "subtract") {
+      return res
+        .status(400)
+        .json(
+          new ApiResponse(
+            400,
+            null,
+            "Operation must be either 'add' or 'subtract'"
+          )
+        );
+    }
+    const numericValue = Number(value);
+    if (isNaN(numericValue) || numericValue < 0) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, null, "Value must be a positive number"));
+    }
+
+    // Find the category and then the embedded product
+    const category = await Category.findById(categoryId);
+    if (!category) {
+      return res
+        .status(404)
+        .json(new ApiResponse(404, null, "Category not found"));
+    }
+    const product = category.products.id(productId);
+    if (!product) {
+      return res
+        .status(404)
+        .json(new ApiResponse(404, null, "Product not found in this category"));
+    }
+
+    // Update the quantity based on the operation
+    if (operation === "add") {
+      product.quantity += numericValue;
+    } else if (operation === "subtract") {
+      if (product.quantity < numericValue) {
+        throw new ApiError(400, "Not enough stock");
+      }
+      product.quantity -= numericValue;
+    }
+
+    // The pre-save hook on the embedded schema will adjust productInstock accordingly
+    await category.save();
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(200, product, "Product stock updated successfully")
+      );
+  } catch (error) {
+    console.error("Error updating product stock:", error);
+    if (error instanceof ApiError) {
+      return res
+        .status(error.status)
+        .json(new ApiResponse(error.status, null, error.message));
+    }
+    res
+      .status(500)
+      .json(new ApiResponse(500, null, "Error updating product stock"));
   }
 };

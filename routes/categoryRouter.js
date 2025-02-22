@@ -8,6 +8,7 @@ import {
   addProductToCategory,
   deleteProductFromCategory,
   updateProductInCategory,
+  updateProductStock,
 } from "../controllers/categoryController.js";
 import {
   authenticateSubAdmin,
@@ -74,6 +75,13 @@ categoryRouter.patch(
   authorizeRoleSubAdmin(["subAdmin"]),
   upload.single("file"),
   updateProductInCategory
+);
+
+categoryRouter.patch(
+  "/:categoryId/product/update-stock/:productId",
+  authenticateSubAdmin,
+  authorizeRoleSubAdmin(["subAdmin"]),
+  updateProductStock
 );
 
 export default categoryRouter;
