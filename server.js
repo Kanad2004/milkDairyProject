@@ -13,7 +13,8 @@ import newofferRouter from "./routes/newofferRouter.js";
 import cors from "cors";
 import mongoose from "mongoose";
 import milkRouter from "./routes/milkRouter.js";
-import categoryRouter from "./routes/categoryRouter.js"
+import categoryRouter from "./routes/categoryRouter.js";
+import loanRouter from "./routes/loanRouter.js";
 
 const app = express();
 app.use(
@@ -46,7 +47,8 @@ app.use("/api/v1/customer", farmerRouter);
 app.use("/api/v1/farmer", farmerRouter);
 app.use("/api/v1/new-offer", newofferRouter);
 app.use("/api/v1/milk", milkRouter);
-app.use("/api/v1/category"  , categoryRouter);
+app.use("/api/v1/category", categoryRouter);
+app.use("/api/v1/loan", loanRouter);
 // Connect to MongoDB and start the server
 
 cloudinary.config({

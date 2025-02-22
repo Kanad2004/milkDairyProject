@@ -1,5 +1,29 @@
 import mongoose from "mongoose";
 
+// Schema for tracking changes to a loan
+const loanHistorySchema = new mongoose.Schema(
+  {
+    changedAt: { type: Date, default: Date.now },
+    loanDate: { type: Date },
+    loanAmount: { type: Number },
+    operation: {
+      type: String,
+      enum: ["update", "delete", "deduct"],
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
+// Schema for each loan record
+const loanSchema = new mongoose.Schema({
+  loanDate: { type: Date, required: true },
+  loanAmount: { type: Number, required: true },
+  isDeleted: { type: Boolean, default: false },
+  history: [loanHistorySchema],
+});
+
+// Main Farmer schema
 const farmerSchema = new mongoose.Schema(
   {
     farmerName: { type: String, required: true },
@@ -20,12 +44,8 @@ const farmerSchema = new mongoose.Schema(
         milkType: { type: String, required: true },
       },
     ],
-    loan: [
-      {
-        loanDate: { type: Date, required: true },
-        loanAmount: { type: Number, required: true },
-      },
-    ],
+    // Array of loans with history and soft delete flag
+    loan: [loanSchema],
   },
   { timestamps: true }
 );
