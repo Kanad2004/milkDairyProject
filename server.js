@@ -16,6 +16,7 @@ import milkRouter from "./routes/milkRouter.js";
 import categoryRouter from "./routes/categoryRouter.js";
 import loanRouter from "./routes/loanRouter.js";
 import transactionRouter from "./routes/transactionRouter.js";
+import onlineCustomerRouter from "./routes/onlinecustomerRouter.js";
 
 const app = express();
 app.use(
@@ -51,6 +52,7 @@ app.use("/api/v1/milk", milkRouter);
 app.use("/api/v1/category", categoryRouter);
 app.use("/api/v1/loan", loanRouter);
 app.use("/api/v1/transaction", transactionRouter);
+app.use("/api/v1/otp-verification", onlineCustomerRouter);
 // Connect to MongoDB and start the server
 
 cloudinary.config({
