@@ -242,7 +242,9 @@ export const updateProductInCategory = async (req, res) => {
     // Find the category first
     const category = await Category.findById(categoryId);
     if (!category) {
-      return res.status(404).json(new ApiResponse(404, null, "Category not found"));
+      return res
+        .status(404)
+        .json(new ApiResponse(404, null, "Category not found"));
     }
 
     // Find the product inside the category
@@ -251,7 +253,9 @@ export const updateProductInCategory = async (req, res) => {
     );
 
     if (productIndex === -1) {
-      return res.status(404).json(new ApiResponse(404, null, "Product not found in this category"));
+      return res
+        .status(404)
+        .json(new ApiResponse(404, null, "Product not found in this category"));
     }
 
     // Fetch the existing product data
@@ -278,11 +282,17 @@ export const updateProductInCategory = async (req, res) => {
     // Save the updated category
     await category.save();
 
-    return res.status(200).json(new ApiResponse(200, category, "Product updated successfully"));
+    return res
+      .status(200)
+      .json(new ApiResponse(200, category, "Product updated successfully"));
   } catch (error) {
     console.error(error);
     const status = error instanceof ApiError ? error.status : 500;
-    return res.status(status).json(new ApiResponse(status, null, error.message || "Error updating product"));
+    return res
+      .status(status)
+      .json(
+        new ApiResponse(status, null, error.message || "Error updating product")
+      );
   }
 };
 
@@ -366,3 +376,26 @@ export const updateProductStock = async (req, res) => {
       .json(new ApiResponse(500, null, "Error updating product stock"));
   }
 };
+
+export const getAllProducts = asyncHandler(async (req, res) => {
+  try {
+    const categories = await Category.find();
+    const allProducts = categories.reduce((acc, category) => {
+      if (category.products && category.products.length > 0) {
+        return acc.concat(category.products);
+      }
+      return acc;
+    }, []);
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, allProducts, "All products fetched successfully")
+      );
+  } catch (err) {
+    console.error("Error fetching all products:", err);
+    return res
+      .status(500)
+      .json(new ApiResponse(500, null, "Error fetching products"));
+  }
+});

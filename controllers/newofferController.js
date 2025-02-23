@@ -5,8 +5,8 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { NewOffer } from "../model/NewOffer.js";
 import { uploadOnCloudinary } from "../utils/CloudinaryUtility.js";
 import mongoose from "mongoose";
-import { v2 as cloudinary} from "cloudinary";
-import fs from 'fs'
+import { v2 as cloudinary } from "cloudinary";
+import fs from "fs";
 
 //This function is just for getting the public id from the url of the file . . .
 const getPublicIdFromUrl = (url) => {
@@ -36,7 +36,7 @@ export const addNewOffer = asyncHandler(async (req, res) => {
       throw new ApiError(500, "Failed to upload the offer file to cloudinary");
     }
 
-    const newOffer = new NewOffer({ link: offerUrl.url , title, description });
+    const newOffer = new NewOffer({ link: offerUrl.url, title, description });
     await newOffer.save();
 
     const createdOffer = await NewOffer.findById(newOffer._id);
@@ -73,14 +73,16 @@ export const editNewOffer = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Offer is not updated");
   }
 
-  if(req?.file?.path){
-    console.log("updating the image file ")
-    await updateOfferImage(req,res) ;
+  if (req?.file?.path) {
+    console.log("updating the image file ");
+    await updateOfferImage(req, res);
   }
 
   const NewupdatedOffer = await NewOffer.findById(id);
 
-  return res.status(200).send(new ApiResponse(200 , NewupdatedOffer , "Offer updated successfully"));
+  return res
+    .status(200)
+    .send(new ApiResponse(200, NewupdatedOffer, "Offer updated successfully"));
 });
 
 // Delete an offer -> testing is remaining
@@ -114,11 +116,11 @@ export const deleteNewOffer = asyncHandler(async (req, res) => {
 });
 
 //Update an offerImage -> testing is remaining
-export const updateOfferImage = (async (req,res) => {
-  const offerImagePath = req.file?.path
-  const {id} = req.params 
-  if(!offerImagePath){
-      throw new ApiError(400 , "Offer file is missing")
+export const updateOfferImage = async (req, res) => {
+  const offerImagePath = req.file?.path;
+  const { id } = req.params;
+  if (!offerImagePath) {
+    throw new ApiError(400, "Offer file is missing");
   }
 
   const offerImg = await uploadOnCloudinary(offerImagePath);
@@ -145,8 +147,8 @@ export const updateOfferImage = (async (req,res) => {
     { new: true }
   );
 
-  return updatedOffer ;
-})
+  return updatedOffer;
+};
 
 //get all offers . . .
 export const getAllOffers = asyncHandler(async (req, res) => {
@@ -157,7 +159,3 @@ export const getAllOffers = asyncHandler(async (req, res) => {
   }
   return res.status(200).send(new ApiResponse(200, offers, "Offers found"));
 });
-
-
-
- 

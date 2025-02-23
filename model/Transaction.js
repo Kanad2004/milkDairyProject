@@ -1,46 +1,43 @@
-// //this is the money which are taking from our customers by selling our products
-
-// import mongoose from "mongoose"
-
-// const transactionSchema = new mongoose.Schema(
-//   {
-//     customer: {
-//       type: mongoose.Schema.Types.ObjectId,
-//       ref: "OnlineCustomer",
-//     },
-//     items: [
-//       {
-//         type: mongoose.Schema.Types.ObjectId,
-//         ref: "TransactionItem",
-//       },
-//     ],
-//     amount: {
-//       type: Number,
-//       required: true,
-//     },
-//     time: {
-//       type: Date,
-//       required: true,
-//     },
-//     admin: {
-//       type: mongoose.Schema.Types.ObjectId,
-//       ref: "Admin",
-//     },
-//     subAdmin: {
-//       type: mongoose.Schema.Types.ObjectId,
-//       ref: "SubAdmin",
-//     },
-//   },
-//   {
-//     timestamps: true,
-//   }
-// );
-
-// export const Transaction = mongoose.model("Transaction", transactionSchema);
-
-//this is the money which are taking from our customers by selling our products
-
 import mongoose from "mongoose";
+
+const transactionItemSchema = new mongoose.Schema(
+  {
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+    },
+    quantity: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+    pamount: {
+      type: Number,
+      required: true,
+      default: 0, // Default is 0, will be recalculated in the hook
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// Pre-save hook to calculate pamount based on quantity and product price
+transactionItemSchema.pre("save", async function (next) {
+  if (this.isModified("quantity") || this.isModified("product")) {
+    try {
+      // Get the product details
+      const product = await mongoose.model("Product").findById(this.product);
+      if (product) {
+        // Calculate the amount
+        this.pamount = product.productPrice * this.quantity;
+      }
+    } catch (error) {
+      console.error("Error calculating pamount:", error);
+    }
+  }
+  next();
+});
 
 const transactionSchema = new mongoose.Schema(
   {
@@ -52,12 +49,7 @@ const transactionSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    items: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "TransactionItem",
-      },
-    ],
+    items: [transactionItemSchema],
     amount: {
       type: Number,
       required: true,
@@ -65,10 +57,6 @@ const transactionSchema = new mongoose.Schema(
     time: {
       type: Date,
       required: true,
-    },
-    admin: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
     },
     subAdmin: {
       type: mongoose.Schema.Types.ObjectId,

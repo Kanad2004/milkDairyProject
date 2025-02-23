@@ -9,6 +9,7 @@ import {
   deleteProductFromCategory,
   updateProductInCategory,
   updateProductStock,
+  getAllProducts,
 } from "../controllers/categoryController.js";
 import {
   authenticateSubAdmin,
@@ -82,6 +83,13 @@ categoryRouter.patch(
   authenticateSubAdmin,
   authorizeRoleSubAdmin(["subAdmin"]),
   updateProductStock
+);
+
+categoryRouter.get(
+  "/get-all-products",
+  authenticateSubAdmin,
+  authorizeRoleSubAdmin(["subAdmin"]),
+  getAllProducts
 );
 
 export default categoryRouter;

@@ -1,93 +1,133 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
-import { Transaction } from "../model/Transaction.js";
-import { TransactionItem } from "../model/TransactionItem.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { Product } from "../models/Product.js";
+import { Transaction } from "../model/Transaction.js";
 
-// 1. Add Item
-export const addItem = asyncHandler(async (req, res) => {
-  try {
-    const { productId, quantity, pamount } = req.body;
+// 1. Save a new Transaction
+export const saveTransaction = asyncHandler(async (req, res) => {
+  const { customerName, mobileNumber, items, time } = req.body;
+  const subAdmin = req.subAdmin?._id; // ensure req.subAdmin exists
 
-    // Validate input
-    if (!productId || !quantity || quantity <= 0 || !pamount || pamount <= 0) {
-      return res.status(400).json({ error: "Invalid product or quantity" });
-    }
-
-    // Check if the product exists
-    const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(404).json({ error: "Product not found" });
-    }
-
-    // Create a transaction item
-    const transactionItem = new TransactionItem({
-      product: productId,
-      quantity,
-      pamount,
-    });
-    await transactionItem.save();
-
-    return res
-      .status(201)
-      .send(new ApiResponse(201, transactionItem, "Item added successfully"));
-  } catch (error) {
-    return res.status(500).send(new ApiError(500, "Internal server error"));
+  // Validate basic transaction input
+  if (
+    !customerName ||
+    !mobileNumber ||
+    !items ||
+    !Array.isArray(items) ||
+    items.length === 0
+  ) {
+    return res.status(400).send(new ApiError(400, "Invalid transaction data"));
   }
+
+  let transactionItemList = [];
+  let amount = 0;
+
+  // Process each transaction item
+  for (const item of items) {
+    // Create and save the transaction item in one step.
+    transactionItemList.push(item);
+    amount += item.pamount;
+  }
+
+  // (Optional) Validate that computed amount is greater than zero
+  if (amount <= 0) {
+    return res
+      .status(400)
+      .send(new ApiError(400, "Total amount must be greater than zero"));
+  }
+
+  // Use provided time or default to now
+  const transactionTime = time ? new Date(time) : new Date();
+
+  // Create the transaction
+  const transaction = new Transaction({
+    customerName,
+    mobileNumber,
+    items: transactionItemList,
+    amount,
+    subAdmin,
+    time: transactionTime,
+  });
+
+  await transaction.save();
+
+  return res
+    .status(201)
+    .send(new ApiResponse(201, transaction, "Transaction saved successfully"));
 });
 
-// 2. Save Whole Transaction
-export const saveTransaction = async (req, res) => {
-  try {
-    const { customerName, mobileNumber, items, amount, adminId, subAdminId } =
-      req.body;
+// 2. Get All Transactions
+export const getAllTransactions = asyncHandler(async (req, res) => {
+  // Populate items (and optionally other referenced fields)
+  const transactions = await Transaction.find().populate("items");
+  return res
+    .status(200)
+    .send(new ApiResponse(200, transactions, "Transactions fetched"));
+});
 
-    // Validate input
-    if (
-      !customerName ||
-      !mobileNumber ||
-      !items ||
-      !Array.isArray(items) ||
-      items.length === 0 ||
-      !amount
-    ) {
-      return res
-        .status(400)
-        .send(new ApiError(400, "Invalid transaction data"));
-    }
+// 3. Update Transaction by ID
+export const updateTransactionById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { customerName, mobileNumber, time, items } = req.body;
 
-    // Verify all transaction items
-    for (const itemId of items) {
-      const transactionItem = await TransactionItem.findById(itemId);
-      if (!transactionItem) {
-        return res
-          .status(404)
-          .send(new ApiError(404, `Transaction item ${itemId} not found`));
-      }
-      // else {
-      //   amount+=transactionItem.pamount;
-      // }
-    }
+  if (!customerName || !mobileNumber || !time || !items || !items.length) {
+    return res.status(400).json(new ApiResponse(400, null, "Invalid input"));
+  }
 
-    // Create the transaction
-    const transaction = new Transaction({
+  // Calculate the updated total amount based on provided items
+  let totalAmount = 0;
+  items.forEach((item) => {
+    totalAmount += item.pamount;
+  });
+
+  const updatedTransaction = await Transaction.findByIdAndUpdate(
+    id,
+    {
       customerName,
       mobileNumber,
+      time,
       items,
-      amount,
-      admin: adminId || null,
-      subAdmin: subAdminId || null,
-      time: new Date(),
-    });
-    await transaction.save();
+      amount: totalAmount,
+    },
+    { new: true }
+  );
 
+  if (!updatedTransaction) {
     return res
-      .status(201)
-      .send(
-        new ApiResponse(201, transaction, "Transaction saved successfully")
-      );
-  } catch (error) {
-    return res.status(500).send(new ApiError(500, "Internal server error"));
+      .status(404)
+      .json(new ApiResponse(404, null, "Transaction not found"));
   }
-};
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        updatedTransaction,
+        "Transaction updated successfully"
+      )
+    );
+});
+
+// 4. Delete Transaction by ID
+export const deleteTransactionById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  // Find and delete the transaction
+  const deletedTransaction = await Transaction.findByIdAndDelete(id);
+  if (!deletedTransaction) {
+    return res
+      .status(404)
+      .json(new ApiResponse(404, null, "Transaction not found"));
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        deletedTransaction,
+        "Transaction deleted successfully"
+      )
+    );
+});
