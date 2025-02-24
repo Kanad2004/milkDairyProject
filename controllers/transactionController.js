@@ -136,8 +136,7 @@ export const deleteTransactionById = asyncHandler(async (req, res) => {
 
 import fs from "fs";
 import XLSX from "xlsx";
-import Transaction from "../model/Transaction.js"; // Import your transaction model
-import Branch from "../model/Branch.js";
+import {Branch} from "../model/Branch.js";
 // Utility function to get start and end dates
 const getDateRange = (type) => {
   const now = new Date();
@@ -182,6 +181,7 @@ const getDateRange = (type) => {
 };
 
 // Generate Report Function
+//This is for the SubAdmin Only . . . 
 export const generateReport = async (req, res) => {
   try {
     const { type } = req.params;
@@ -192,13 +192,12 @@ export const generateReport = async (req, res) => {
       transactionDate: { $gte: startDate, $lte: endDate },
     };
 
- 
     if (req.subAdmin) {
       query.subAdmin = req.subAdmin._id;
     }
 
     const transactions = await Transaction.find(query)
-      .populate("customer items admin subAdmin branch");
+      .populate("items subAdmin");
 
     if (!transactions.length) {
       return res.status(404).json({ message: "No transactions found" });
@@ -208,7 +207,7 @@ export const generateReport = async (req, res) => {
     // Prepare data for Excel
     const reportData = transactions.map((transaction) => ({
       TransactionID: transaction._id,
-      CustomerID: transaction.customer._id,
+      CustomerMobileNumber: transaction.mobileNumber,
       Amount: transaction.amount || "N/A",
       TransactionDate: transaction.transactionDate.toISOString().replace("T", " ").slice(0, 19), // Format as YYYY-MM-DD HH:mm:ss
       AdminID: transaction.admin ? transaction.admin._id : "N/A",
@@ -247,6 +246,7 @@ export const generateReport = async (req, res) => {
 };
 
 // Generate Combined Report Function
+//This is for the Admin
 export const generateCombinedReport = async (req, res) => {
   try {
     const { type } = req.params;
@@ -255,7 +255,7 @@ export const generateCombinedReport = async (req, res) => {
     // Create query filter for all branches
     const transactions = await Transaction.find({
       transactionDate: { $gte: startDate, $lte: endDate },
-    }).populate("customer items admin subAdmin branch");
+    }).populate("items subAdmin");
 
     if (!transactions.length) {
       return res.status(404).json({ message: "No transactions found" });
@@ -266,7 +266,7 @@ export const generateCombinedReport = async (req, res) => {
     // Prepare data for Excel
     const reportData = transactions.map((transaction) => ({
       TransactionID: transaction._id,
-      CustomerID: transaction.customer._id,
+      CustomerMobileNumber: transaction.mobileNumber,
       Amount: transaction.amount || "N/A",
       TransactionDate: transaction.transactionDate.toISOString().replace("T", " ").slice(0, 19), // Format as YYYY-MM-DD HH:mm:ss
       AdminID: transaction.admin ? transaction.admin._id : "N/A",

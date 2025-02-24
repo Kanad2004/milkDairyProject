@@ -358,4 +358,4 @@ export const getAllFarmersTransactionReportsOfBranch = async (req, res, next) =>
 };
 
 
-export { addMilk, getAllMilk, updateMilkTransaction, deleteMilkTransaction };
+export { addMilk, getAllMilk, updateMilkTransaction, deleteMilkTransaction , getFarmerTransactionReportByMobileNumber, getAllFarmersTransactionReportsOfBranch};

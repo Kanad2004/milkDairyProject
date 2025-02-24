@@ -43,13 +43,9 @@ transactionRouter.delete(
 );
 
 import { generateReport, generateCombinedReport } from "../controllers/transactionController.js";
-import { authenticateSubAdmin, authorizeRoleSubAdmin } from "../middlewares/auth.js";
-
 
 //subadmin 
 transactionRouter.get("/subAdmin/customer-reports/:type",  authenticateSubAdmin,authorizeRoleSubAdmin(["subAdmin"]), generateReport);
-
-
 
 //admin 
 transactionRouter.get("/admin/customer-reports/:type",  authenticateSubAdmin,authorizeRoleSubAdmin(["Admin"]), generateReport);
