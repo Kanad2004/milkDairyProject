@@ -131,3 +131,175 @@ export const deleteTransactionById = asyncHandler(async (req, res) => {
       )
     );
 });
+
+
+
+import fs from "fs";
+import XLSX from "xlsx";
+import Transaction from "../model/Transaction.js"; // Import your transaction model
+import Branch from "../model/Branch.js";
+// Utility function to get start and end dates
+const getDateRange = (type) => {
+  const now = new Date();
+  let startDate, endDate;
+
+  switch (type) {
+    case "daily":
+      startDate = new Date(now.setHours(0, 0, 0, 0));
+      endDate = new Date(now.setHours(23, 59, 59, 999));
+      break;
+
+    case "weekly":
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay()); // Set to Sunday
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6); // Saturday
+      endOfWeek.setHours(23, 59, 59, 999);
+
+      startDate = startOfWeek;
+      endDate = endOfWeek;
+      break;
+
+    case "monthly":
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      endDate.setHours(23, 59, 59, 999);
+      break;
+
+    case "yearly":
+      startDate = new Date(now.getFullYear(), 0, 1);
+      endDate = new Date(now.getFullYear(), 11, 31);
+      endDate.setHours(23, 59, 59, 999);
+      break;
+
+    default:
+      throw new Error("Invalid report type");
+  }
+
+  return { startDate, endDate };
+};
+
+// Generate Report Function
+export const generateReport = async (req, res) => {
+  try {
+    const { type } = req.params;
+    const { startDate, endDate } = getDateRange(type);
+
+    // Create query filter
+    const query = {
+      transactionDate: { $gte: startDate, $lte: endDate },
+    };
+
+ 
+    if (req.subAdmin) {
+      query.subAdmin = req.subAdmin._id;
+    }
+
+    const transactions = await Transaction.find(query)
+      .populate("customer items admin subAdmin branch");
+
+    if (!transactions.length) {
+      return res.status(404).json({ message: "No transactions found" });
+    }
+    const branch = Branch.findById(req.subAdmin.branch)
+
+    // Prepare data for Excel
+    const reportData = transactions.map((transaction) => ({
+      TransactionID: transaction._id,
+      CustomerID: transaction.customer._id,
+      Amount: transaction.amount || "N/A",
+      TransactionDate: transaction.transactionDate.toISOString().replace("T", " ").slice(0, 19), // Format as YYYY-MM-DD HH:mm:ss
+      AdminID: transaction.admin ? transaction.admin._id : "N/A",
+      SubAdminID: transaction.subAdmin ? transaction.subAdmin._id : "N/A",
+      BranchNAME: branch.branchName ? branch.branchName : "N/A",
+      Items: transaction.items.map((item) => `Product: ${item.product}, Quantity: ${item.quantity}`).join("; "),
+    }));
+
+    // Create a new workbook
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(reportData);
+
+    // Append worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
+
+    // Define file path
+    const filePath = `./reports/${type}_transactions_${branch.branchName ? `branch_${branch.branchName}_` : ""}${Date.now()}.xlsx`;
+
+    // Write to file
+    XLSX.writeFile(workbook, filePath);
+
+    // Send file as response
+    res.download(filePath, (err) => {
+      if (err) {
+        console.error("Error sending file:", err);
+        return res.status(500).json({ message: "Error downloading file" });
+      }
+      // Delete file after sending
+      fs.unlink(filePath, (err) => {
+        if (err) console.error("Error deleting file:", err);
+      });
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Generate Combined Report Function
+export const generateCombinedReport = async (req, res) => {
+  try {
+    const { type } = req.params;
+    const { startDate, endDate } = getDateRange(type);
+
+    // Create query filter for all branches
+    const transactions = await Transaction.find({
+      transactionDate: { $gte: startDate, $lte: endDate },
+    }).populate("customer items admin subAdmin branch");
+
+    if (!transactions.length) {
+      return res.status(404).json({ message: "No transactions found" });
+    }
+
+    const branch = Branch.findById(req.subAdmin.branch)
+
+    // Prepare data for Excel
+    const reportData = transactions.map((transaction) => ({
+      TransactionID: transaction._id,
+      CustomerID: transaction.customer._id,
+      Amount: transaction.amount || "N/A",
+      TransactionDate: transaction.transactionDate.toISOString().replace("T", " ").slice(0, 19), // Format as YYYY-MM-DD HH:mm:ss
+      AdminID: transaction.admin ? transaction.admin._id : "N/A",
+      SubAdminID: transaction.subAdmin ? transaction.subAdmin._id : "N/A",
+      BranchNAME: branch.branchName ? branch.branchName : "N/A",
+      Items: transaction.items.map((item) => `Product: ${item.product}, Quantity: ${item.quantity}`).join("; "),
+    }));
+
+    // Create a new workbook
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(reportData);
+
+    // Append worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
+
+    // Define file path for combined report
+    const filePath = `./reports/${type}_transactions_combined_${Date.now()}.xlsx`;
+
+    // Write to file
+    XLSX.writeFile(workbook, filePath);
+
+    // Send file as response
+    res.download(filePath, (err) => {
+      if (err) {
+        console.error("Error sending file:", err);
+        return res.status(500).json({ message: "Error downloading file" });
+      }
+      // Delete file after sending
+      fs.unlink(filePath, (err) => {
+        if (err) console.error("Error deleting file:", err);
+      });
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

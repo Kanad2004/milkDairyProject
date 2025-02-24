@@ -124,4 +124,238 @@ const deleteMilkTransaction = asyncHandler(async (req, res) => {
     );
 });
 
+
+// Get transactions of a farmer by mobile number (Admin & SubAdmin restricted)
+export const getFarmerTransactionByMobileNumber = async (req, res, next) => {
+  try {
+    const { mobileNumber } = req.params;
+
+    if (!mobileNumber) {
+      return next(new ApiError(400, "Mobile number is required"));
+    }
+
+    let query = { mobileNumber };
+
+    // If SubAdmin, restrict access to their branch only
+    if (req.subAdmin) {
+      query.subAdmin = req.subAdmin._id;
+    }
+
+    const farmer = await Farmer.findOne(query).select("farmerName transaction");
+    if (!farmer) {
+      return next(new ApiError(404, "Farmer not found"));
+    }
+
+    res.status(200).json({ success: true, transactions: farmer.transaction });
+  } catch (error) {
+    next(new ApiError(500, "Server error"));
+  }
+};
+
+// Get all transactions for a branch (Daily, Weekly, Monthly) for Admin & SubAdmin
+export const getAllFarmersTransactionReportOfBranch = async (req, res, next) => {
+  try {
+    const { timeFrame } = req.query; // daily, weekly, monthly
+    if (!timeFrame || !["daily", "weekly", "monthly"].includes(timeFrame)) {
+      return next(new ApiError(400, "Invalid time frame (daily, weekly, monthly)"));
+    }
+
+    let dateFilter = {};
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (timeFrame === "daily") {
+      dateFilter = { transactionDate: { $gte: today } };
+    } else if (timeFrame === "weekly") {
+      const weekStart = new Date();
+      weekStart.setDate(today.getDate() - 7);
+      dateFilter = { transactionDate: { $gte: weekStart } };
+    } else if (timeFrame === "monthly") {
+      const monthStart = new Date();
+      monthStart.setDate(1);
+      dateFilter = { transactionDate: { $gte: monthStart } };
+    }
+
+    let query = { "transaction.transactionDate": dateFilter };
+
+    // If SubAdmin, restrict access to their branch only
+    if (req.subAdmin) {
+      query.subAdmin = req.subAdmin._id;
+    }
+
+    const farmers = await Farmer.find(query).select("farmerName transaction");
+
+    let transactions = [];
+    farmers.forEach((farmer) => {
+      transactions = transactions.concat(
+        farmer.transaction.filter((t) => t.transactionDate >= dateFilter.transactionDate.$gte)
+      );
+    });
+
+    res.status(200).json({ success: true, transactions });
+  } catch (error) {
+    next(new ApiError(500, "Server error"));
+  }
+};
+
+
+import ExcelJS from "exceljs";
+import fs from "fs";
+import path from "path";
+
+/**
+ * Generate Excel report for a single farmer's transactions based on mobile number
+ */
+export const getFarmerTransactionReportByMobileNumber = async (req, res, next) => {
+  try {
+    const { mobileNumber } = req.query;
+
+    if (!mobileNumber) {
+      return next(new ApiError(400, "Mobile number is required"));
+    }
+
+    const farmer = await Farmer.findOne({ mobileNumber }).select("farmerName mobileNumber transaction");
+
+    if (!farmer || !farmer.transaction.length) {
+      return next(new ApiError(404, "No transactions found for this mobile number"));
+    }
+
+    // Create an Excel workbook
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Farmer Transactions");
+
+    // Add headers
+    worksheet.columns = [
+      { header: "Farmer Name", key: "farmerName", width: 20 },
+      { header: "Mobile Number", key: "mobileNumber", width: 15 },
+      { header: "Transaction Date", key: "transactionDate", width: 15 },
+      { header: "Transaction Amount", key: "transactionAmount", width: 15 },
+      { header: "Milk Quantity (L)", key: "milkQuantity", width: 15 },
+      { header: "Milk Type", key: "milkType", width: 15 },
+    ];
+
+    // Add transaction data
+    farmer.transaction.forEach((t) => {
+      worksheet.addRow({
+        farmerName: farmer.farmerName,
+        mobileNumber: farmer.mobileNumber,
+        transactionDate: t.transactionDate.toISOString().split("T")[0],
+        transactionAmount: t.transactionAmount,
+        milkQuantity: t.milkQuantity,
+        milkType: t.milkType,
+      });
+    });
+
+    // Style the header row
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: "center" };
+    });
+
+    // Define file path
+    const filePath = path.join("reports", `Farmer_Transactions_${mobileNumber}.xlsx`);
+
+    // Ensure reports directory exists
+    if (!fs.existsSync("reports")) {
+      fs.mkdirSync("reports");
+    }
+
+    // Write the file
+    await workbook.xlsx.writeFile(filePath);
+
+    // Send file as response
+    res.download(filePath, `Farmer_Transactions_${mobileNumber}.xlsx`, (err) => {
+      if (err) {
+        next(new ApiError(500, "Error downloading the file"));
+      }
+    });
+
+  } catch (error) {
+    next(new ApiError(500, "Server error"));
+  }
+};
+
+/**
+ * Generate Excel report for all farmers in a specific branch
+ */
+export const getAllFarmersTransactionReportsOfBranch = async (req, res, next) => {
+  try {
+    const { subAdminId } = req.subAdmin._id;
+
+    if (!subAdminId) {
+      return next(new ApiError(400, "Branch ID is required"));
+    }
+
+    const farmers = await Farmer.find({ subAdminId }).select("farmerName mobileNumber transaction");
+
+    if (!farmers.length) {
+      return next(new ApiError(404, "No farmers found in this branch"));
+    }
+
+    let transactions = [];
+
+    farmers.forEach((farmer) => {
+      farmer.transaction.forEach((t) => {
+        transactions.push({
+          farmerName: farmer.farmerName,
+          mobileNumber: farmer.mobileNumber,
+          transactionDate: t.transactionDate.toISOString().split("T")[0],
+          transactionAmount: t.transactionAmount,
+          milkQuantity: t.milkQuantity,
+          milkType: t.milkType,
+        });
+      });
+    });
+
+    if (transactions.length === 0) {
+      return next(new ApiError(404, "No transactions found in this branch"));
+    }
+
+    // Create an Excel workbook
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Branch Transactions");
+
+    // Add headers
+    worksheet.columns = [
+      { header: "Farmer Name", key: "farmerName", width: 20 },
+      { header: "Mobile Number", key: "mobileNumber", width: 15 },
+      { header: "Transaction Date", key: "transactionDate", width: 15 },
+      { header: "Transaction Amount", key: "transactionAmount", width: 15 },
+      { header: "Milk Quantity (L)", key: "milkQuantity", width: 15 },
+      { header: "Milk Type", key: "milkType", width: 15 },
+    ];
+
+    // Add transaction data
+    worksheet.addRows(transactions);
+
+    // Style the header row
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: "center" };
+    });
+
+    // Define file path
+    const filePath = path.join("reports", `Branch_Transactions_${branchId}.xlsx`);
+
+    // Ensure reports directory exists
+    if (!fs.existsSync("reports")) {
+      fs.mkdirSync("reports");
+    }
+
+    // Write the file
+    await workbook.xlsx.writeFile(filePath);
+
+    // Send file as response
+    res.download(filePath, `Branch_Transactions_${branchId}.xlsx`, (err) => {
+      if (err) {
+        next(new ApiError(500, "Error downloading the file"));
+      }
+    });
+
+  } catch (error) {
+    next(new ApiError(500, "Server error"));
+  }
+};
+
+
 export { addMilk, getAllMilk, updateMilkTransaction, deleteMilkTransaction };

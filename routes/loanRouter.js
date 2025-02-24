@@ -12,6 +12,9 @@ import {
   deleteLoan,
   getAllLoans,
   updateLoan,
+  generateLoanReportAdmin,
+  generateLoanReportSubAdmin,
+  generateLoanReportByMobileNumber
 } from "../controllers/loanController.js";
 
 const loanRouter = express.Router();
@@ -50,5 +53,18 @@ loanRouter.post(
   authorizeRoleSubAdmin("subAdmin"),
   deductLoan
 );
+
+
+
+// Route to generate loan report for all farmers
+loanRouter.get("/admin/loans/report",authenticateAdmin, authorizeRoleAdmin(['Admin']), generateLoanReportAdmin);
+// Route to generate loan report by farmer mobile number
+loanRouter.get("/adimin/loans/report/:mobileNumber",authenticateAdmin, authorizeRoleAdmin(['Admin']), generateLoanReportByMobileNumber);
+
+
+// Route to generate loan report for all farmers
+loanRouter.get("/subAdmin/loans/report",authenticateAdmin, authorizeRoleAdmin(['subAdmin']), generateLoanReportSubAdmin);
+// Route to generate loan report by farmer mobile number
+loanRouter.get("/subAdimin/loans/report/:mobileNumber",authenticateAdmin, authorizeRoleAdmin(['subAdmin']), generateLoanReportByMobileNumber);
 
 export default loanRouter;
