@@ -59,7 +59,7 @@ const categorySchema = new mongoose.Schema(
     },
     subAdmin: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "SubAdmin",  
+      ref: "SubAdmin",
     },
     products: [embeddedProductSchema],
   },

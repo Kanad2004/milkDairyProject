@@ -2,6 +2,9 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Farmer } from "../model/Farmer.js";
+import ExcelJS from "exceljs";
+import fs from "fs";
+import path from "path";
 
 // Add Milk Transaction
 const addMilk = asyncHandler(async (req, res) => {
@@ -124,7 +127,6 @@ const deleteMilkTransaction = asyncHandler(async (req, res) => {
     );
 });
 
-
 // Get transactions of a farmer by mobile number (Admin & SubAdmin restricted)
 export const getFarmerTransactionByMobileNumber = async (req, res, next) => {
   try {
@@ -153,11 +155,13 @@ export const getFarmerTransactionByMobileNumber = async (req, res, next) => {
 };
 
 // Get all transactions for a branch (Daily, Weekly, Monthly) for Admin & SubAdmin
-export const getAllFarmersTransactionReportOfBranch = async (req, res, next) => {
+const getAllFarmersTransactionReportOfBranch = async (req, res, next) => {
   try {
     const { timeFrame } = req.query; // daily, weekly, monthly
     if (!timeFrame || !["daily", "weekly", "monthly"].includes(timeFrame)) {
-      return next(new ApiError(400, "Invalid time frame (daily, weekly, monthly)"));
+      return next(
+        new ApiError(400, "Invalid time frame (daily, weekly, monthly)")
+      );
     }
 
     let dateFilter = {};
@@ -188,7 +192,9 @@ export const getAllFarmersTransactionReportOfBranch = async (req, res, next) => 
     let transactions = [];
     farmers.forEach((farmer) => {
       transactions = transactions.concat(
-        farmer.transaction.filter((t) => t.transactionDate >= dateFilter.transactionDate.$gte)
+        farmer.transaction.filter(
+          (t) => t.transactionDate >= dateFilter.transactionDate.$gte
+        )
       );
     });
 
@@ -198,15 +204,10 @@ export const getAllFarmersTransactionReportOfBranch = async (req, res, next) => 
   }
 };
 
-
-import ExcelJS from "exceljs";
-import fs from "fs";
-import path from "path";
-
 /**
  * Generate Excel report for a single farmer's transactions based on mobile number
  */
-export const getFarmerTransactionReportByMobileNumber = async (req, res, next) => {
+const getFarmerTransactionReportByMobileNumber = async (req, res, next) => {
   try {
     const { mobileNumber } = req.query;
 
@@ -214,10 +215,14 @@ export const getFarmerTransactionReportByMobileNumber = async (req, res, next) =
       return next(new ApiError(400, "Mobile number is required"));
     }
 
-    const farmer = await Farmer.findOne({ mobileNumber }).select("farmerName mobileNumber transaction");
+    const farmer = await Farmer.findOne({ mobileNumber }).select(
+      "farmerName mobileNumber transaction"
+    );
 
     if (!farmer || !farmer.transaction.length) {
-      return next(new ApiError(404, "No transactions found for this mobile number"));
+      return next(
+        new ApiError(404, "No transactions found for this mobile number")
+      );
     }
 
     // Create an Excel workbook
@@ -253,7 +258,10 @@ export const getFarmerTransactionReportByMobileNumber = async (req, res, next) =
     });
 
     // Define file path
-    const filePath = path.join("reports", `Farmer_Transactions_${mobileNumber}.xlsx`);
+    const filePath = path.join(
+      "reports",
+      `Farmer_Transactions_${mobileNumber}.xlsx`
+    );
 
     // Ensure reports directory exists
     if (!fs.existsSync("reports")) {
@@ -264,12 +272,15 @@ export const getFarmerTransactionReportByMobileNumber = async (req, res, next) =
     await workbook.xlsx.writeFile(filePath);
 
     // Send file as response
-    res.download(filePath, `Farmer_Transactions_${mobileNumber}.xlsx`, (err) => {
-      if (err) {
-        next(new ApiError(500, "Error downloading the file"));
+    res.download(
+      filePath,
+      `Farmer_Transactions_${mobileNumber}.xlsx`,
+      (err) => {
+        if (err) {
+          next(new ApiError(500, "Error downloading the file"));
+        }
       }
-    });
-
+    );
   } catch (error) {
     next(new ApiError(500, "Server error"));
   }
@@ -278,7 +289,7 @@ export const getFarmerTransactionReportByMobileNumber = async (req, res, next) =
 /**
  * Generate Excel report for all farmers in a specific branch
  */
-export const getAllFarmersTransactionReportsOfBranch = async (req, res, next) => {
+const getAllFarmersTransactionReportsOfBranch = async (req, res, next) => {
   try {
     const { subAdminId } = req.subAdmin._id;
 
@@ -286,7 +297,9 @@ export const getAllFarmersTransactionReportsOfBranch = async (req, res, next) =>
       return next(new ApiError(400, "Branch ID is required"));
     }
 
-    const farmers = await Farmer.find({ subAdminId }).select("farmerName mobileNumber transaction");
+    const farmers = await Farmer.find({ subAdminId }).select(
+      "farmerName mobileNumber transaction"
+    );
 
     if (!farmers.length) {
       return next(new ApiError(404, "No farmers found in this branch"));
@@ -335,7 +348,10 @@ export const getAllFarmersTransactionReportsOfBranch = async (req, res, next) =>
     });
 
     // Define file path
-    const filePath = path.join("reports", `Branch_Transactions_${branchId}.xlsx`);
+    const filePath = path.join(
+      "reports",
+      `Branch_Transactions_${branchId}.xlsx`
+    );
 
     // Ensure reports directory exists
     if (!fs.existsSync("reports")) {
@@ -351,11 +367,17 @@ export const getAllFarmersTransactionReportsOfBranch = async (req, res, next) =>
         next(new ApiError(500, "Error downloading the file"));
       }
     });
-
   } catch (error) {
     next(new ApiError(500, "Server error"));
   }
 };
 
-
-export { addMilk, getAllMilk, updateMilkTransaction, deleteMilkTransaction , getFarmerTransactionReportByMobileNumber, getAllFarmersTransactionReportsOfBranch};
+export {
+  addMilk,
+  getAllMilk,
+  updateMilkTransaction,
+  deleteMilkTransaction,
+  getFarmerTransactionReportByMobileNumber,
+  getAllFarmersTransactionReportsOfBranch,
+  getAllFarmersTransactionReportOfBranch,
+};

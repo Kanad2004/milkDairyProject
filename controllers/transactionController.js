@@ -181,7 +181,7 @@ const getDateRange = (type) => {
 };
 
 // Generate Report Function
-//This is for the SubAdmin Only . . . 
+//This is for the SubAdmin Only . . .
 export const generateReport = async (req, res) => {
   try {
     const { type } = req.params;
@@ -196,8 +196,9 @@ export const generateReport = async (req, res) => {
       query.subAdmin = req.subAdmin._id;
     }
 
-    const transactions = await Transaction.find(query)
-      .populate("items subAdmin");
+    const transactions = await Transaction.find(query).populate(
+      "items subAdmin"
+    );
 
     if (!transactions.length) {
       return res.status(404).json({ message: "No transactions found" });
