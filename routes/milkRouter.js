@@ -52,8 +52,6 @@ import {
 } from "../controllers/milkController.js";
 
 
-
-
 // Get farmer transactions by mobile number (Admin & SubAdmin restricted)
 milkRouter.get(
   "/admin/farmer/:mobileNumber",

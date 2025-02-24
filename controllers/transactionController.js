@@ -181,6 +181,7 @@ const getDateRange = (type) => {
 };
 
 // Generate Report Function
+//This is for the SubAdmin Only . . . 
 export const generateReport = async (req, res) => {
   try {
     const { type } = req.params;
@@ -195,9 +196,8 @@ export const generateReport = async (req, res) => {
       query.subAdmin = req.subAdmin._id;
     }
 
-    const transactions = await Transaction.find(query).populate(
-      "customer items admin subAdmin branch"
-    );
+    const transactions = await Transaction.find(query)
+      .populate("items subAdmin");
 
     if (!transactions.length) {
       return res.status(404).json({ message: "No transactions found" });
@@ -207,7 +207,7 @@ export const generateReport = async (req, res) => {
     // Prepare data for Excel
     const reportData = transactions.map((transaction) => ({
       TransactionID: transaction._id,
-      CustomerID: transaction.customer._id,
+      CustomerMobileNumber: transaction.mobileNumber,
       Amount: transaction.amount || "N/A",
       TransactionDate: transaction.transactionDate
         .toISOString()
@@ -253,6 +253,7 @@ export const generateReport = async (req, res) => {
 };
 
 // Generate Combined Report Function
+//This is for the Admin
 export const generateCombinedReport = async (req, res) => {
   try {
     const { type } = req.params;
@@ -261,7 +262,7 @@ export const generateCombinedReport = async (req, res) => {
     // Create query filter for all branches
     const transactions = await Transaction.find({
       transactionDate: { $gte: startDate, $lte: endDate },
-    }).populate("customer items admin subAdmin branch");
+    }).populate("items subAdmin");
 
     if (!transactions.length) {
       return res.status(404).json({ message: "No transactions found" });
@@ -272,7 +273,7 @@ export const generateCombinedReport = async (req, res) => {
     // Prepare data for Excel
     const reportData = transactions.map((transaction) => ({
       TransactionID: transaction._id,
-      CustomerID: transaction.customer._id,
+      CustomerMobileNumber: transaction.mobileNumber,
       Amount: transaction.amount || "N/A",
       TransactionDate: transaction.transactionDate
         .toISOString()

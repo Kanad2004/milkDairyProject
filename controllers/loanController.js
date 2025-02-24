@@ -255,8 +255,6 @@ export const generateLoanReportAdmin = asyncHandler(async (req, res) => {
   });
 });
 
-
-
 // Generate loan report for all farmers
 export const generateLoanReportSubAdmin = asyncHandler(async (req, res) => {
 
@@ -381,7 +379,4 @@ export const generateLoanReportByMobileNumber = asyncHandler(async (req, res) =>
   });
 });
 
-
-
-
-export { createLoan, getAllLoans, updateLoan, deleteLoan, deductLoan };
+export { createLoan, getAllLoans, updateLoan, deleteLoan, deductLoan, generateLoanReportAdmin, generateLoanReportSubAdmin, generateLoanReportByMobileNumber };
