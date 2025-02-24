@@ -2,6 +2,9 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Transaction } from "../model/Transaction.js";
+import fs from "fs";
+import XLSX from "xlsx";
+import { Branch } from "../model/Branch.js";
 
 // 1. Save a new Transaction
 export const saveTransaction = asyncHandler(async (req, res) => {
@@ -132,12 +135,8 @@ export const deleteTransactionById = asyncHandler(async (req, res) => {
     );
 });
 
+// Import your transaction model
 
-
-import fs from "fs";
-import XLSX from "xlsx";
-import Transaction from "../model/Transaction.js"; // Import your transaction model
-import Branch from "../model/Branch.js";
 // Utility function to get start and end dates
 const getDateRange = (type) => {
   const now = new Date();
@@ -192,29 +191,34 @@ export const generateReport = async (req, res) => {
       transactionDate: { $gte: startDate, $lte: endDate },
     };
 
- 
     if (req.subAdmin) {
       query.subAdmin = req.subAdmin._id;
     }
 
-    const transactions = await Transaction.find(query)
-      .populate("customer items admin subAdmin branch");
+    const transactions = await Transaction.find(query).populate(
+      "customer items admin subAdmin branch"
+    );
 
     if (!transactions.length) {
       return res.status(404).json({ message: "No transactions found" });
     }
-    const branch = Branch.findById(req.subAdmin.branch)
+    const branch = Branch.findById(req.subAdmin.branch);
 
     // Prepare data for Excel
     const reportData = transactions.map((transaction) => ({
       TransactionID: transaction._id,
       CustomerID: transaction.customer._id,
       Amount: transaction.amount || "N/A",
-      TransactionDate: transaction.transactionDate.toISOString().replace("T", " ").slice(0, 19), // Format as YYYY-MM-DD HH:mm:ss
+      TransactionDate: transaction.transactionDate
+        .toISOString()
+        .replace("T", " ")
+        .slice(0, 19), // Format as YYYY-MM-DD HH:mm:ss
       AdminID: transaction.admin ? transaction.admin._id : "N/A",
       SubAdminID: transaction.subAdmin ? transaction.subAdmin._id : "N/A",
       BranchNAME: branch.branchName ? branch.branchName : "N/A",
-      Items: transaction.items.map((item) => `Product: ${item.product}, Quantity: ${item.quantity}`).join("; "),
+      Items: transaction.items
+        .map((item) => `Product: ${item.product}, Quantity: ${item.quantity}`)
+        .join("; "),
     }));
 
     // Create a new workbook
@@ -225,7 +229,9 @@ export const generateReport = async (req, res) => {
     XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
 
     // Define file path
-    const filePath = `./reports/${type}_transactions_${branch.branchName ? `branch_${branch.branchName}_` : ""}${Date.now()}.xlsx`;
+    const filePath = `./reports/${type}_transactions_${
+      branch.branchName ? `branch_${branch.branchName}_` : ""
+    }${Date.now()}.xlsx`;
 
     // Write to file
     XLSX.writeFile(workbook, filePath);
@@ -261,18 +267,23 @@ export const generateCombinedReport = async (req, res) => {
       return res.status(404).json({ message: "No transactions found" });
     }
 
-    const branch = Branch.findById(req.subAdmin.branch)
+    const branch = Branch.findById(req.subAdmin.branch);
 
     // Prepare data for Excel
     const reportData = transactions.map((transaction) => ({
       TransactionID: transaction._id,
       CustomerID: transaction.customer._id,
       Amount: transaction.amount || "N/A",
-      TransactionDate: transaction.transactionDate.toISOString().replace("T", " ").slice(0, 19), // Format as YYYY-MM-DD HH:mm:ss
+      TransactionDate: transaction.transactionDate
+        .toISOString()
+        .replace("T", " ")
+        .slice(0, 19), // Format as YYYY-MM-DD HH:mm:ss
       AdminID: transaction.admin ? transaction.admin._id : "N/A",
       SubAdminID: transaction.subAdmin ? transaction.subAdmin._id : "N/A",
       BranchNAME: branch.branchName ? branch.branchName : "N/A",
-      Items: transaction.items.map((item) => `Product: ${item.product}, Quantity: ${item.quantity}`).join("; "),
+      Items: transaction.items
+        .map((item) => `Product: ${item.product}, Quantity: ${item.quantity}`)
+        .join("; "),
     }));
 
     // Create a new workbook
