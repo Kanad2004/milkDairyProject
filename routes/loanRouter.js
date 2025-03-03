@@ -65,6 +65,6 @@ loanRouter.get("/adimin/loans/report/:mobileNumber",authenticateAdmin, authorize
 // Route to generate loan report for all farmers
 loanRouter.get("/subAdmin/loans/report",authenticateAdmin, authorizeRoleAdmin(['subAdmin']), generateLoanReportSubAdmin);
 // Route to generate loan report by farmer mobile number
-loanRouter.get("/subAdimin/loans/report/:mobileNumber",authenticateAdmin, authorizeRoleAdmin(['subAdmin']), generateLoanReportByMobileNumber);
+loanRouter.get("/subAdimin/loans/report/:mobileNumber",authenticateSubAdmin, authorizeRoleSubAdmin(['subAdmin']), generateLoanReportByMobileNumber);
 
 export default loanRouter;
