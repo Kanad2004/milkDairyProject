@@ -327,7 +327,7 @@ export const generateLoanReportSubAdmin = asyncHandler(async (req, res) => {
 export const generateLoanReportByMobileNumber = asyncHandler(async (req, res) => {
   const { mobileNumber } = req.params;
 
-  const farmer = await Farmer.findOne(mobileNumber).select("loan farmerName mobileNumber address totalLoan totalLoanPaidBack totalLoanRemaining");
+  const farmer = await Farmer.findOne({mobileNumber}).select("loan farmerName mobileNumber address totalLoan totalLoanPaidBack totalLoanRemaining");
 
   if (!farmer || farmer.loan.length === 0) {
       throw new ApiError(404, "No loans found for the specified farmer");
@@ -371,7 +371,7 @@ export const generateLoanReportByMobileNumber = asyncHandler(async (req, res) =>
   // Write the file and respond with download link
   await workbook.xlsx.writeFile(filePath);
 
-  return res.download(filePath, `loans-${farmerId}.xlsx`, (err) => {
+  return res.download(filePath, `loans-${mobileNumber}.xlsx`, (err) => {
       if (err) {
           throw new ApiError(500, "Error occurred while downloading the file");
       }

@@ -176,7 +176,9 @@ export const getAllFarmersTransactionReportOfBranch = async (req, res, next) => 
       dateFilter = { transactionDate: { $gte: monthStart } };
     }
 
-    let query = { "transaction.transactionDate": dateFilter };
+    // let query = { "transaction.transactionDate": dateFilter };
+    let query = { transaction: { $elemMatch: dateFilter } };
+
 
     // If SubAdmin, restrict access to their branch only
     if (req.subAdmin) {
@@ -214,7 +216,9 @@ export const getFarmerTransactionReportByMobileNumber = async (req, res, next) =
       return next(new ApiError(400, "Mobile number is required"));
     }
 
-    const farmer = await Farmer.findOne({ mobileNumber }).select("farmerName mobileNumber transaction");
+    // const farmer = await Farmer.findOne({ mobileNumber }).select("farmerName mobileNumber transaction");
+    const farmer = await Farmer.findOne({mobileNumber}).select("transaction");
+
 
     if (!farmer || !farmer.transaction.length) {
       return next(new ApiError(404, "No transactions found for this mobile number"));
@@ -280,7 +284,7 @@ export const getFarmerTransactionReportByMobileNumber = async (req, res, next) =
  */
 export const getAllFarmersTransactionReportsOfBranch = async (req, res, next) => {
   try {
-    const { subAdminId } = req.subAdmin._id;
+    const  subAdminId  = req.subAdmin._id;
 
     if (!subAdminId) {
       return next(new ApiError(400, "Branch ID is required"));
@@ -335,13 +339,15 @@ export const getAllFarmersTransactionReportsOfBranch = async (req, res, next) =>
     });
 
     // Define file path
-    const filePath = path.join("reports", `Branch_Transactions_${branchId}.xlsx`);
+    // const filePath = path.join("reports", `Branch_Transactions_${branchId}.xlsx`);
+    const filePath = path.join("reports", `Branch_Transactions_${subAdminId}.xlsx`);
+
 
     // Ensure reports directory exists
     if (!fs.existsSync("reports")) {
       fs.mkdirSync("reports");
     }
-
+    //  fs.mkdir("reports", { recursive: true }); // Creates if not exists
     // Write the file
     await workbook.xlsx.writeFile(filePath);
 
