@@ -217,15 +217,10 @@ const getFarmerTransactionReportByMobileNumber = async (req, res, next) => {
       return next(new ApiError(400, "Mobile number is required"));
     }
 
-<<<<<<< HEAD
+
     // const farmer = await Farmer.findOne({ mobileNumber }).select("farmerName mobileNumber transaction");
     const farmer = await Farmer.findOne({mobileNumber}).select("transaction");
 
-=======
-    const farmer = await Farmer.findOne({ mobileNumber }).select(
-      "farmerName mobileNumber transaction"
-    );
->>>>>>> 54ca61ad5fd4661b7c0624d2b11c45996f208ba5
 
     if (!farmer || !farmer.transaction.length) {
       return next(
@@ -356,16 +351,10 @@ const getAllFarmersTransactionReportsOfBranch = async (req, res, next) => {
     });
 
     // Define file path
-<<<<<<< HEAD
+
     // const filePath = path.join("reports", `Branch_Transactions_${branchId}.xlsx`);
     const filePath = path.join("reports", `Branch_Transactions_${subAdminId}.xlsx`);
 
-=======
-    const filePath = path.join(
-      "reports",
-      `Branch_Transactions_${branchId}.xlsx`
-    );
->>>>>>> 54ca61ad5fd4661b7c0624d2b11c45996f208ba5
 
     // Ensure reports directory exists
     if (!fs.existsSync("reports")) {

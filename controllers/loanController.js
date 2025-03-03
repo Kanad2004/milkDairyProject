@@ -326,13 +326,9 @@ const generateLoanReportSubAdmin = asyncHandler(async (req, res) => {
 const generateLoanReportByMobileNumber = asyncHandler(async (req, res) => {
   const { mobileNumber } = req.params;
 
-<<<<<<< HEAD
+
   const farmer = await Farmer.findOne({mobileNumber}).select("loan farmerName mobileNumber address totalLoan totalLoanPaidBack totalLoanRemaining");
-=======
-  const farmer = await Farmer.findOne(mobileNumber).select(
-    "loan farmerName mobileNumber address totalLoan totalLoanPaidBack totalLoanRemaining"
-  );
->>>>>>> 54ca61ad5fd4661b7c0624d2b11c45996f208ba5
+
 
   if (!farmer || farmer.loan.length === 0) {
     throw new ApiError(404, "No loans found for the specified farmer");
@@ -380,18 +376,11 @@ const generateLoanReportByMobileNumber = asyncHandler(async (req, res) => {
   // Write the file and respond with download link
   await workbook.xlsx.writeFile(filePath);
 
-<<<<<<< HEAD
+
   return res.download(filePath, `loans-${mobileNumber}.xlsx`, (err) => {
       if (err) {
           throw new ApiError(500, "Error occurred while downloading the file");
       }
-=======
-  return res.download(filePath, `loans-${farmerId}.xlsx`, (err) => {
-    if (err) {
-      throw new ApiError(500, "Error occurred while downloading the file");
-    }
->>>>>>> 54ca61ad5fd4661b7c0624d2b11c45996f208ba5
-
     // Clean up file after download
     fs.unlinkSync(filePath);
   });
