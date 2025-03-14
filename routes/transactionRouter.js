@@ -45,7 +45,7 @@ transactionRouter.delete(
 import { generateReport, generateCombinedReport } from "../controllers/transactionController.js";
 
 //subadmin 
-transactionRouter.get("/subAdmin/customer-reports/:type",  authenticateSubAdmin,authorizeRoleSubAdmin(["subAdmin"]), generateReport);
+transactionRouter.get("/subAdmin/customer-reports/report",  authenticateSubAdmin,authorizeRoleSubAdmin(["subAdmin"]), generateReport);
 
 //admin 
 transactionRouter.get("/admin/customer-reports/:type",  authenticateSubAdmin,authorizeRoleSubAdmin(["Admin"]), generateReport);

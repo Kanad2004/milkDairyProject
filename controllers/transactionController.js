@@ -2,6 +2,9 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Transaction } from "../model/Transaction.js";
+import fs from "fs";
+import XLSX from "xlsx";
+import {Branch} from "../model/Branch.js";
 
 // 1. Save a new Transaction
 export const saveTransaction = asyncHandler(async (req, res) => {
@@ -133,10 +136,6 @@ export const deleteTransactionById = asyncHandler(async (req, res) => {
 });
 
 
-
-import fs from "fs";
-import XLSX from "xlsx";
-import {Branch} from "../model/Branch.js";
 // Utility function to get start and end dates
 const getDateRange = (type) => {
   const now = new Date();
@@ -144,17 +143,21 @@ const getDateRange = (type) => {
 
   switch (type) {
     case "daily":
-      startDate = new Date(now.setHours(0, 0, 0, 0));
-      endDate = new Date(now.setHours(23, 59, 59, 999));
+      startDate = new Date(now);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(now);
+      endDate.setHours(23, 59, 59, 999);
       break;
 
     case "weekly":
       const startOfWeek = new Date(now);
-      startOfWeek.setDate(now.getDate() - now.getDay()); // Set to Sunday
+      const dayOfWeek = now.getDay(); // 0 (Sun) to 6 (Sat)
+      const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Adjust for Monday start
+      startOfWeek.setDate(now.getDate() + diff);
       startOfWeek.setHours(0, 0, 0, 0);
 
       const endOfWeek = new Date(startOfWeek);
-      endOfWeek.setDate(startOfWeek.getDate() + 6); // Saturday
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
       endOfWeek.setHours(23, 59, 59, 999);
 
       startDate = startOfWeek;
@@ -180,40 +183,52 @@ const getDateRange = (type) => {
   return { startDate, endDate };
 };
 
+
 // Generate Report Function
 //This is for the SubAdmin Only . . . 
+//This function is working correctly but I want now what fields should be included in it . . .
 export const generateReport = async (req, res) => {
   try {
-    const { type } = req.params;
+    const { reportType } = req.query;
+    const type = reportType;
     const { startDate, endDate } = getDateRange(type);
 
     // Create query filter
     const query = {
-      transactionDate: { $gte: startDate, $lte: endDate },
+      time: { $gte: startDate, $lte: endDate },
     };
 
     if (req.subAdmin) {
       query.subAdmin = req.subAdmin._id;
     }
 
+    // Ensure subAdmin and admin fields are populated
     const transactions = await Transaction.find(query)
       .populate("items subAdmin");
 
     if (!transactions.length) {
       return res.status(404).json({ message: "No transactions found" });
     }
-    const branch = Branch.findById(req.subAdmin.branch)
-
+    
+    // Ensure branch is retrieved properly
+    const branch = req.subAdmin ? await Branch.findById(req.subAdmin.branch) : null;
+    
     // Prepare data for Excel
     const reportData = transactions.map((transaction) => ({
-      TransactionID: transaction._id,
-      CustomerMobileNumber: transaction.mobileNumber,
+      TransactionID: transaction._id ? transaction._id.toString() : "N/A",
+      CustomerMobileNumber: transaction.mobileNumber || "N/A",
       Amount: transaction.amount || "N/A",
-      TransactionDate: transaction.transactionDate.toISOString().replace("T", " ").slice(0, 19), // Format as YYYY-MM-DD HH:mm:ss
-      AdminID: transaction.admin ? transaction.admin._id : "N/A",
-      SubAdminID: transaction.subAdmin ? transaction.subAdmin._id : "N/A",
-      BranchNAME: branch.branchName ? branch.branchName : "N/A",
-      Items: transaction.items.map((item) => `Product: ${item.product}, Quantity: ${item.quantity}`).join("; "),
+      TransactionDate: transaction.time
+        ? transaction.time.toISOString().replace("T", " ").slice(0, 19)
+        : "N/A", 
+      AdminID: transaction.admin ? transaction.admin._id.toString() : "N/A",
+      SubAdminID: transaction.subAdmin ? transaction.subAdmin._id.toString() : "N/A",
+      BranchID: branch ? branch.branchId : "N/A",
+      Items: transaction.items.length
+        ? transaction.items
+            .map((item) => `Product: ${item.product}, Quantity: ${item.quantity}`)
+            .join("; ")
+        : "N/A",
     }));
 
     // Create a new workbook
@@ -224,7 +239,9 @@ export const generateReport = async (req, res) => {
     XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
 
     // Define file path
-    const filePath = `./reports/${type}_transactions_${branch.branchName ? `branch_${branch.branchName}_` : ""}${Date.now()}.xlsx`;
+    const filePath = `./reports/${type}_transactions_${
+      branch ? `branch_${branch.branchName}_` : ""
+    }${Date.now()}.xlsx`;
 
     // Write to file
     XLSX.writeFile(workbook, filePath);
@@ -241,9 +258,11 @@ export const generateReport = async (req, res) => {
       });
     });
   } catch (error) {
+    console.error("Error generating report:", error);
     res.status(500).json({ message: error.message });
   }
 };
+
 
 // Generate Combined Report Function
 //This is for the Admin
@@ -254,7 +273,7 @@ export const generateCombinedReport = async (req, res) => {
 
     // Create query filter for all branches
     const transactions = await Transaction.find({
-      transactionDate: { $gte: startDate, $lte: endDate },
+      time: { $gte: startDate, $lte: endDate },
     }).populate("items subAdmin");
 
     if (!transactions.length) {
@@ -268,7 +287,7 @@ export const generateCombinedReport = async (req, res) => {
       TransactionID: transaction._id,
       CustomerMobileNumber: transaction.mobileNumber,
       Amount: transaction.amount || "N/A",
-      TransactionDate: transaction.transactionDate.toISOString().replace("T", " ").slice(0, 19), // Format as YYYY-MM-DD HH:mm:ss
+      TransactionDate: transaction.time.toISOString().replace("T", " ").slice(0, 19), // Format as YYYY-MM-DD HH:mm:ss
       AdminID: transaction.admin ? transaction.admin._id : "N/A",
       SubAdminID: transaction.subAdmin ? transaction.subAdmin._id : "N/A",
       BranchNAME: branch.branchName ? branch.branchName : "N/A",
