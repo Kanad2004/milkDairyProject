@@ -2,8 +2,6 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { Admin } from "../model/Admin.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { SubAdmin } from "../model/SubAdmin.js";
-import { Branch } from "../model/Branch.js";
 
 //do some changes in options object when you are going to test the login controller as well as in frontEnd part . . .
 //cookies are not set in the mobile application at the user end that's why here we are sending the accesstoken and refreshtoken in the response to the user

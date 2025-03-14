@@ -4,6 +4,8 @@ import {
   getAllTransactions,
   saveTransaction,
   updateTransactionById,
+  generateReport,
+  generateCombinedReport,
 } from "../controllers/transactionController.js";
 import {
   authenticateAdmin,
@@ -42,6 +44,7 @@ transactionRouter.delete(
   deleteTransactionById
 );
 
+<<<<<<< HEAD
 import { generateReport, generateCombinedReport } from "../controllers/transactionController.js";
 
 //subadmin 
@@ -51,6 +54,28 @@ transactionRouter.get("/subAdmin/customer-reports/report",  authenticateSubAdmin
 transactionRouter.get("/admin/customer-reports/:type",  authenticateSubAdmin,authorizeRoleSubAdmin(["Admin"]), generateReport);
 transactionRouter.get("/admin/customer-reports/all", authenticateSubAdmin,authorizeRoleSubAdmin(["Admin"]),generateCombinedReport);
 
+=======
+//subadmin
+transactionRouter.get(
+  "/subAdmin/customer-reports/:type",
+  authenticateSubAdmin,
+  authorizeRoleSubAdmin(["subAdmin"]),
+  generateReport
+);
+>>>>>>> 3756dec2309dc15fbcde1b05ed35a07af4e5daae
 
+//admin
+transactionRouter.get(
+  "/admin/customer-reports/:type",
+  authenticateSubAdmin,
+  authorizeRoleSubAdmin(["Admin"]),
+  generateReport
+);
+transactionRouter.get(
+  "/admin/customer-reports/all",
+  authenticateSubAdmin,
+  authorizeRoleSubAdmin(["Admin"]),
+  generateCombinedReport
+);
 
 export default transactionRouter;

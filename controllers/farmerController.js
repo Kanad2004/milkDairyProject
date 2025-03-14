@@ -1,11 +1,9 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
-import { Admin } from "../model/Admin.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Farmer } from "../model/Farmer.js";
 import xlsx from "xlsx";
 import path from "path";
-import fs from "fs";
 
 const addFarmer = asyncHandler(async (req, res) => {
   const { farmerName, mobileNumber, address, milkType, gender, joiningDate } =

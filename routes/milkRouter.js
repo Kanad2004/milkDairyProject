@@ -9,7 +9,10 @@ import {
 import {
   addMilk,
   deleteMilkTransaction,
+  getAllFarmersTransactionReportsOfBranch,
   getAllMilk,
+  getFarmerTransactionByMobileNumber,
+  getFarmerTransactionReportByMobileNumber,
   updateMilkTransaction,
 } from "../controllers/milkController.js";
 
@@ -43,19 +46,10 @@ milkRouter.delete(
   deleteMilkTransaction
 );
 
-
-import {
-  getFarmerTransactionByMobileNumber,
-  getAllFarmersTransactionReportOfBranch,
-  getFarmerTransactionReportByMobileNumber,
-  getAllFarmersTransactionReportsOfBranch,
-} from "../controllers/milkController.js";
-
-
 // Get farmer transactions by mobile number (Admin & SubAdmin restricted)
 milkRouter.get(
   "/admin/farmer/:mobileNumber",
-  authenticateAdmin ,
+  authenticateAdmin,
   authorizeRoleAdmin(["Admin"]),
   getFarmerTransactionByMobileNumber
 );
@@ -72,23 +66,22 @@ milkRouter.get(
   "/subAdmin/branch-transactions",
   authenticateSubAdmin,
   authorizeRoleSubAdmin(["subAdmin"]),
-  getAllFarmersTransactionReportOfBranch
+  getAllFarmersTransactionReportsOfBranch
 );
 
 milkRouter.get(
   "/admin/branch-transactions",
   authenticateAdmin,
   authorizeRoleAdmin(["Admin"]),
-  getAllFarmersTransactionReportOfBranch
+  getAllFarmersTransactionReportsOfBranch
 );
-
 
 // Generate Excel report for a single farmer by mobile number
 
 // Get farmer transactions by mobile number (Admin & SubAdmin restricted)
 milkRouter.get(
   "/admin/farmer/excel/:mobileNumber",
-  authenticateAdmin ,
+  authenticateAdmin,
   authorizeRoleAdmin(["Admin"]),
   getFarmerTransactionReportByMobileNumber
 );
@@ -115,6 +108,5 @@ milkRouter.get(
   authorizeRoleSubAdmin(["subAdmin"]),
   getAllFarmersTransactionReportsOfBranch
 );
-
 
 export default milkRouter;
