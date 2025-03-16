@@ -10,6 +10,9 @@ import {
   updateProductInCategory,
   updateProductStock,
   getAllProducts,
+  getCategoriesByBranch,
+  getAllProductsFromBranch,
+  getCategoryFromAndById,
 } from "../controllers/categoryController.js";
 import {
   authenticateSubAdmin,
@@ -91,5 +94,21 @@ categoryRouter.get(
   authorizeRoleSubAdmin(["subAdmin"]),
   getAllProducts
 );
+
+//This is for online customer . . . 
+categoryRouter.get(
+  "/get-categories-by-branch/:selectedBranch",
+  getCategoriesByBranch
+)
+
+categoryRouter.get(
+  "/get-all-products/:selectedBranch" , 
+  getAllProductsFromBranch
+)
+
+categoryRouter.get(
+  "/get-category-from-branch-id/:selectedBranch/:categoryId",
+  getCategoryFromAndById
+)
 
 export default categoryRouter;

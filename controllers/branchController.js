@@ -34,6 +34,13 @@ const getBranches = async (req, res) => {
     .send(new ApiResponse(200, branches, "all branched getched successfully"));
 };
 
+const getBranchesForCustomers = async (req,res) => {
+  const branches = await Branch.find();
+  res
+  .status(200)
+  .send(new ApiResponse(200, branches, "all branched getched successfully"));
+}; 
+
 //!This is done
 const getBranchById = async (req, res) => {
   const { branchId } = req.params;
@@ -98,4 +105,5 @@ export {
   getBranchById,
   updateBranchById,
   deleteBranchById,
+  getBranchesForCustomers
 };

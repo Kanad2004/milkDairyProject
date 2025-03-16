@@ -11,6 +11,7 @@ import {
   getBranchById,
   getBranches,
   updateBranchById,
+  getBranchesForCustomers
 } from "../controllers/branchController.js";
 const branchRouter = express.Router();
 
@@ -28,6 +29,11 @@ branchRouter.get(
   authenticateAdmin,
   authorizeRoleAdmin(["Admin"]),
   getBranches
+);
+
+branchRouter.get(
+  "/get-branches-for-customer",
+  getBranchesForCustomers
 );
 
 branchRouter.patch(
