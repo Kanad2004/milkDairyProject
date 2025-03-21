@@ -62,6 +62,11 @@ const categorySchema = new mongoose.Schema(
       ref: "SubAdmin",
     },
     products: [embeddedProductSchema],
+    
+    branchId:{
+      type : Number , 
+      required: true ,
+    }
   },
   {
     timestamps: true,

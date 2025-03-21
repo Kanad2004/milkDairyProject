@@ -2,9 +2,12 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Farmer } from "../model/Farmer.js";
+import { SubAdmin } from "../model/SubAdmin.js";
+
 import ExcelJS from "exceljs";
 import fs from "fs";
 import path from "path";
+import { Branch } from "../model/Branch.js";
 
 // Add Milk Transaction
 const addMilk = asyncHandler(async (req, res) => {
@@ -180,7 +183,9 @@ const getAllFarmersTransactionReportOfBranch = async (req, res, next) => {
       dateFilter = { transactionDate: { $gte: monthStart } };
     }
 
-    let query = { "transaction.transactionDate": dateFilter };
+    // let query = { "transaction.transactionDate": dateFilter };
+    let query = { transaction: { $elemMatch: dateFilter } };
+
 
     // If SubAdmin, restrict access to their branch only
     if (req.subAdmin) {
@@ -209,22 +214,20 @@ const getAllFarmersTransactionReportOfBranch = async (req, res, next) => {
  */
 const getFarmerTransactionReportByMobileNumber = async (req, res, next) => {
   try {
-    const { mobileNumber } = req.query;
+    const { mobileNumber } = req.params;
 
     if (!mobileNumber) {
       return next(new ApiError(400, "Mobile number is required"));
     }
+    
+    const farmer = await Farmer.findOne({ mobileNumber: String(mobileNumber) });
 
-    const farmer = await Farmer.findOne({ mobileNumber }).select(
-      "farmerName mobileNumber transaction"
-    );
-
-    if (!farmer || !farmer.transaction.length) {
-      return next(
-        new ApiError(404, "No transactions found for this mobile number")
-      );
+    console.log(1);
+    if (!farmer || !farmer.transaction || farmer.transaction.length === 0) {
+      return next(new ApiError(404, "No transactions found for this mobile number"));
     }
-
+    
+    
     // Create an Excel workbook
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Farmer Transactions");
@@ -238,7 +241,7 @@ const getFarmerTransactionReportByMobileNumber = async (req, res, next) => {
       { header: "Milk Quantity (L)", key: "milkQuantity", width: 15 },
       { header: "Milk Type", key: "milkType", width: 15 },
     ];
-
+    console.log(2);
     // Add transaction data
     farmer.transaction.forEach((t) => {
       worksheet.addRow({
@@ -291,19 +294,22 @@ const getFarmerTransactionReportByMobileNumber = async (req, res, next) => {
  */
 const getAllFarmersTransactionReportsOfBranch = async (req, res, next) => {
   try {
-    const { subAdminId } = req.subAdmin._id;
+    const subAdminId  = req.subAdmin._id;
+
+    const subAdmin = await SubAdmin.findById(subAdminId);
+    
+    const branch = await Branch.find({branch: subAdmin.branch}) ;
 
     if (!subAdminId) {
       return next(new ApiError(400, "Branch ID is required"));
     }
 
-    const farmers = await Farmer.find({ subAdminId }).select(
-      "farmerName mobileNumber transaction"
-    );
+    const farmers = await Farmer.find({ subAdmin : subAdminId }).select("farmerName mobileNumber transaction");
 
     if (!farmers.length) {
       return next(new ApiError(404, "No farmers found in this branch"));
-    }
+    } 
+    console.log(1);
 
     let transactions = [];
 
@@ -323,7 +329,7 @@ const getAllFarmersTransactionReportsOfBranch = async (req, res, next) => {
     if (transactions.length === 0) {
       return next(new ApiError(404, "No transactions found in this branch"));
     }
-
+    console.log(2);
     // Create an Excel workbook
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Branch Transactions");
@@ -346,29 +352,26 @@ const getAllFarmersTransactionReportsOfBranch = async (req, res, next) => {
       cell.font = { bold: true };
       cell.alignment = { horizontal: "center" };
     });
-
+    console.log(3);
     // Define file path
-    const filePath = path.join(
-      "reports",
-      `Branch_Transactions_${branchId}.xlsx`
-    );
-
+    const filePath = path.join("reports", `Branch_Transactions_${branch.branchId}.xlsx`);
+    console.log(4);
     // Ensure reports directory exists
     if (!fs.existsSync("reports")) {
       fs.mkdirSync("reports");
     }
-
+    //  fs.mkdir("reports", { recursive: true }); // Creates if not exists
     // Write the file
     await workbook.xlsx.writeFile(filePath);
-
+    console.log(4);
     // Send file as response
-    res.download(filePath, `Branch_Transactions_${branchId}.xlsx`, (err) => {
+    res.download(filePath, `Branch_Transactions_${branch.branchId}.xlsx`, (err) => {
       if (err) {
         next(new ApiError(500, "Error downloading the file"));
       }
     });
   } catch (error) {
-    next(new ApiError(500, "Server error"));
+    next(new ApiError(500, "Internal Server error"));
   }
 };
 

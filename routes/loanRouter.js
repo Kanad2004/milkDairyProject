@@ -36,21 +36,21 @@ loanRouter.get(
 loanRouter.put(
   "/update/:loanId",
   authenticateSubAdmin,
-  authorizeRoleSubAdmin("subAdmin"),
+  authorizeRoleSubAdmin(["subAdmin"]),
   updateLoan
 );
 
 loanRouter.delete(
   "/delete/:loanId",
   authenticateSubAdmin,
-  authorizeRoleSubAdmin("subAdmin"),
+  authorizeRoleSubAdmin(["subAdmin"]),
   deleteLoan
 );
 
 loanRouter.post(
   "/deduct/:loanId",
   authenticateSubAdmin,
-  authorizeRoleSubAdmin("subAdmin"),
+  authorizeRoleSubAdmin(["subAdmin"]),
   deductLoan
 );
 
@@ -63,8 +63,9 @@ loanRouter.get("/adimin/loans/report/:mobileNumber",authenticateAdmin, authorize
 
 
 // Route to generate loan report for all farmers
-loanRouter.get("/subAdmin/loans/report",authenticateAdmin, authorizeRoleAdmin(['subAdmin']), generateLoanReportSubAdmin);
+loanRouter.get("/subAdmin/loans/report",authenticateSubAdmin, authorizeRoleSubAdmin(['subAdmin']), generateLoanReportSubAdmin);
+
 // Route to generate loan report by farmer mobile number
-loanRouter.get("/subAdimin/loans/report/:mobileNumber",authenticateSubAdmin, authorizeRoleSubAdmin(['subAdmin']), generateLoanReportByMobileNumber);
+loanRouter.get("/subAdmin/loans/report/:mobileNumber",authenticateSubAdmin, authorizeRoleSubAdmin(['subAdmin']), generateLoanReportByMobileNumber);
 
 export default loanRouter;

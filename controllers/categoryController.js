@@ -1,14 +1,14 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
-
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Category } from "../model/Category.js";
 import { uploadOnCloudinary } from "../utils/CloudinaryUtility.js";
+import { SubAdmin } from "../model/SubAdmin.js";
 
 // Add a new category
 export const addCategory = async (req, res) => {
   try {
-    const { categoryName, categoryDescription } = req.body;
+    const { categoryName, categoryDescription} = req.body;
 
     if (!categoryName || !categoryDescription) {
       return res
@@ -24,11 +24,14 @@ export const addCategory = async (req, res) => {
         .json(new ApiResponse(400, null, "Category already exists"));
     }
 
+    const subAdmin = await SubAdmin.findById(req.subAdmin._id).populate("branch")
+    console.log(subAdmin)
     const newCategory = new Category({
       categoryName,
       categoryDescription,
       subAdmin: req.subAdmin._id,
       products: [], // Initially empty
+      branchId:subAdmin?.branch?.branchId,
     });
 
     await newCategory.save();
@@ -399,3 +402,77 @@ export const getAllProducts = asyncHandler(async (req, res) => {
       .json(new ApiResponse(500, null, "Error fetching products"));
   }
 });
+
+export const getCategoriesByBranch = asyncHandler(async (req,res) => {
+  const {selectedBranch} = req.params; 
+
+  try {
+    const categories = await Category.find({branchId : selectedBranch}).populate("subAdmin"); // Populating subAdmin details if needed
+    res
+      .status(200)
+      .json(
+        new ApiResponse(200, categories, "Categories fetched successfully")
+      );
+  } catch (error) {
+    console.error(error);
+    if (error instanceof ApiError) {
+      return res
+        .status(error.status)
+        .json(new ApiResponse(error.status, null, error.message));
+    }
+    res
+      .status(500)
+      .json(new ApiResponse(500, null, "Error fetching categories"));
+  }
+})
+
+
+export const getAllProductsFromBranch = asyncHandler(async (req, res) => {
+  const {selectedBranch} = req.params ; 
+  try {
+    const categories = await Category.find({branchId : selectedBranch});
+    const allProducts = categories.reduce((acc, category) => {
+      if (category.products && category.products.length > 0) {
+        return acc.concat(category.products);
+      }
+      return acc;
+    }, []);
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, allProducts, "All products fetched successfully")
+      );
+  } catch (err) {
+    console.error("Error fetching all products:", err);
+    return res
+      .status(500)
+      .json(new ApiResponse(500, null, "Error fetching products"));
+  }
+});
+
+export const getCategoryFromAndById = asyncHandler(async (req,res) => {
+  try {
+    const {selectedBranch} = req.params; 
+    const { categoryId } = req.params;
+    const category = await Category.findById(categoryId).populate("subAdmin"); // Populating subAdmin details if needed
+
+    if (!category) {
+      return res
+        .status(404)
+        .json(new ApiResponse(404, null, "Category not found"));
+    }
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, category.products, "Category fetched successfully"));
+  } catch (error) {
+    console.error(error);
+    if (error instanceof ApiError) {
+      return res
+        .status(error.status)
+        .json(new ApiResponse(error.status, null, error.message));
+    }
+    res.status(500).json(new ApiResponse(500, null, "Error fetching category"));
+  }
+})

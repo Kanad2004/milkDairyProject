@@ -4,7 +4,7 @@ const transactionItemSchema = new mongoose.Schema(
   {
     product: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Product",
+      ref: "Category", //changed from Product to Category 
     },
     quantity: {
       type: Number,
