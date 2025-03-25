@@ -8,7 +8,7 @@ const loanHistorySchema = new mongoose.Schema(
     loanAmount: { type: Number },
     operation: {
       type: String,
-      enum: [ "delete", "deduct"],
+      enum: [ "delete", "deduct", "revert"],
       required: true,
     },
   },
@@ -26,16 +26,16 @@ const loanSchema = new mongoose.Schema({
 // Main Farmer schema
 const farmerSchema = new mongoose.Schema(
   {
-    famrerId : { type: Number, required: true },
+    farmerId : { type: Number, required: true },
     farmerName: { type: String, required: true },
-    mobileNumber: { type: String, required: true, unique: true },
+    mobileNumber: { type: String, required: true},
     address: { type: String, required: true },
     milkType: { type: String, required: true },
     gender: { type: String, required: true },
     joiningDate: { type: Date, required: true },
     subAdmin: { type: mongoose.Schema.Types.ObjectId, ref: "SubAdmin" },
-    // totalLoan: { type: Number, default: 0 },
-    // totalLoanPaidBack: { type: Number, default: 0 },
+    totalLoan: { type: Number, default: 0 },
+    totalLoanPaidBack: { type: Number, default: 0 },
     totalLoanRemaining: { type: Number, default: 0 },
     transaction: [
       {
@@ -45,6 +45,8 @@ const farmerSchema = new mongoose.Schema(
         milkType: { type: String, required: true },
         snf: { type: Number, required: true },
         fat: { type: Number, required: true },
+        transactionTime: {type : String , required: true},
+        pricePerLitre: {type : Number , required: true},
       },
     ],
     // Array of loans with history and soft delete flag

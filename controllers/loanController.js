@@ -5,6 +5,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import exceljs from "exceljs";
 import path from "path";
 import fs from "fs";
+
 // Create a new loan for a farmer
 const createLoan = asyncHandler(async (req, res) => {
   const { farmerId, loanAmount, loanDate } = req.body;
@@ -13,7 +14,7 @@ const createLoan = asyncHandler(async (req, res) => {
     throw new ApiError(400, "All fields are required");
   }
 
-  const farmer = await Farmer.findOne({ famrerId: farmerId, subAdmin });
+  const farmer = await Farmer.findOne({ farmerId: farmerId, subAdmin });
   if (!farmer) {
     throw new ApiError(404, "Farmer not found");
   }
@@ -26,7 +27,7 @@ const createLoan = asyncHandler(async (req, res) => {
   farmer.loan.push(loan);
 
   // Update totals accordingly
-  // farmer.totalLoan += Number(loanAmount);
+  farmer.totalLoan += Number(loanAmount);
   farmer.totalLoanRemaining += Number(loanAmount);
 
   await farmer.save();
@@ -40,6 +41,7 @@ const createLoan = asyncHandler(async (req, res) => {
 const getAllLoans = asyncHandler(async (req, res) => {
   const farmers = await Farmer.find({ subAdmin: req.subAdmin._id });
   // Note: In reports, you can filter out or include soft-deleted loans as needed.
+  
   return res
     .status(200)
     .json(new ApiResponse(200, farmers, "All loans fetched successfully"));
@@ -67,6 +69,7 @@ const updateLoan = asyncHandler(async (req, res) => {
   const loanIndex = farmer.loan.findIndex(
     (loan) => loan._id.toString() === loanId
   );
+
   if (loanIndex === -1) {
     throw new ApiError(404, "Loan not found");
   }
@@ -86,7 +89,7 @@ const updateLoan = asyncHandler(async (req, res) => {
   farmer.loan[loanIndex].loanAmount = loanAmount;
 
   // Adjust totals to reflect the updated loan amount
-  // farmer.totalLoan = farmer.totalLoan - oldLoanAmount + Number(loanAmount);
+  farmer.totalLoan = farmer.totalLoan - oldLoanAmount + Number(loanAmount);
   farmer.totalLoanRemaining =
     farmer.totalLoanRemaining - oldLoanAmount + Number(loanAmount);
 
@@ -145,7 +148,6 @@ const deductLoan = asyncHandler(async (req, res) => {
   farmer.loan[loanIndex].loanAmount = oldLoanAmount - Number(loanAmount);
 
   // Adjust totals to reflect the updated loan amount
-  farmer.totalLoan = farmer.totalLoan - Number(loanAmount);
   farmer.totalLoanPaidBack = farmer.totalLoanPaidBack + Number(loanAmount);
   farmer.totalLoanRemaining = farmer.totalLoanRemaining - Number(loanAmount);
 

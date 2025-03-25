@@ -16,6 +16,7 @@ const addFarmer = asyncHandler(async (req, res) => {
     joiningDate,
   } = req.body;
   const subAdmin = req.subAdmin._id;
+  
 
   // Validate that all required fields are provided and not empty.
   // For string fields, we trim the value to avoid spaces being considered valid.
@@ -35,7 +36,7 @@ const addFarmer = asyncHandler(async (req, res) => {
     throw new ApiError(400, "All fields are required");
   }
 
-  // Check if a farmer with the same mobile number already exists
+  // Check if a farmer with the same Id already exists
   const existingFarmer = await Farmer.findOne({
     subAdmin,
     farmerId,
@@ -47,7 +48,7 @@ const addFarmer = asyncHandler(async (req, res) => {
   // Create a new farmer with the provided data.
   // For string fields, we trim the values. For joiningDate, convert it to a Date object if needed.
   const newFarmer = await Farmer.create({
-    farmerId: farmerId,
+    farmerId: Number(farmerId),
     farmerName: farmerName,
     mobileNumber: mobileNumber,
     address: address,
@@ -122,7 +123,7 @@ const updateFarmer = asyncHandler(async (req, res) => {
     throw new ApiError(400, "All fields are required");
   }
 
-  farmer.famrerId = farmerId;
+  farmer.farmerId = farmerId;
   farmer.farmerName = farmerName;
   farmer.mobileNumber = mobileNumber;
   farmer.address = address;
@@ -165,7 +166,7 @@ const exportFarmerDetail = async (req, res) => {
 
     const data = [
       {
-        "Farmer Id": farmer.famrerId,
+        "Farmer Id": farmer.farmerId,
         "Farmer Name": farmer.farmerName,
         "Mobile Number": farmer.mobileNumber,
         Address: farmer.address,

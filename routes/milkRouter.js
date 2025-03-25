@@ -33,14 +33,14 @@ milkRouter.get(
 );
 
 milkRouter.patch(
-  "/update-milk/:farmerNumber/:transactionId",
+  "/update-milk/:farmerId/:transactionId",
   authenticateSubAdmin,
   authorizeRoleSubAdmin(["subAdmin"]),
   updateMilkTransaction
 );
 
 milkRouter.delete(
-  "/delete-milk/:farmerNumber/:transactionId",
+  "/delete-milk/:farmerId/:transactionId",
   authenticateSubAdmin,
   authorizeRoleSubAdmin(["subAdmin"]),
   deleteMilkTransaction

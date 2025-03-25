@@ -6,6 +6,7 @@ import fs from "fs";
 import XLSX from "xlsx";
 import {Branch} from "../model/Branch.js";
 import {SubAdmin} from "../model/SubAdmin.js";
+import moment from "moment"
 // 1. Save a new Transaction
 export const saveTransaction = asyncHandler(async (req, res) => {
   const { customerName, mobileNumber, items, time } = req.body;
@@ -19,7 +20,7 @@ export const saveTransaction = asyncHandler(async (req, res) => {
     !Array.isArray(items) ||
     items.length === 0
   ) {
-    return res.status(400).send(new ApiError(400, "Invalid transaction data"));
+    return res.status(400).json({ success: false, message: "Invalid transaction data" });
   }
 
   let transactionItemList = [];
@@ -36,7 +37,8 @@ export const saveTransaction = asyncHandler(async (req, res) => {
   if (amount <= 0) {
     return res
       .status(400)
-      .send(new ApiError(400, "Total amount must be greater than zero"));
+      .json(
+        { success: false, message: "Total amount must be greater than zero" });
   }
 
   // Use provided time or default to now
@@ -60,13 +62,32 @@ export const saveTransaction = asyncHandler(async (req, res) => {
 });
 
 // 2. Get All Transactions
+
 export const getAllTransactions = asyncHandler(async (req, res) => {
-  // Populate items (and optionally other referenced fields)
-  const transactions = await Transaction.find().populate("items");
-  return res
-    .status(200)
-    .send(new ApiResponse(200, transactions, "Transactions fetched"));
+  try {
+    // Get today's start and end timestamps
+    const startOfDay = moment().startOf("day").toDate();
+    const endOfDay = moment().endOf("day").toDate();
+
+    // Fetch transactions only from today
+    const transactions = await Transaction.find({
+      time: { $gte: startOfDay, $lte: endOfDay }, // Filter transactions for today
+    })
+
+    if (!transactions.length) {
+      return res
+        .status(404)
+        .send(new ApiResponse(404, [], "No transactions found for today"));
+    }
+    return res
+      .status(200)
+      .send(new ApiResponse(200, transactions, "Today's transactions fetched successfully"));
+  } catch (error) {
+    console.error("Error fetching today's transactions:", error);
+    return res.status(500).send(new ApiResponse(500, null, "Server error"));
+  }
 });
+
 
 // 3. Update Transaction by ID
 export const updateTransactionById = asyncHandler(async (req, res) => {

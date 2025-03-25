@@ -3,7 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Farmer } from "../model/Farmer.js";
 import { SubAdmin } from "../model/SubAdmin.js";
-
+import mongoose from "mongoose";
 import ExcelJS from "exceljs";
 import fs from "fs";
 import path from "path";
@@ -12,17 +12,21 @@ import { Branch } from "../model/Branch.js";
 // Add Milk Transaction
 const addMilk = asyncHandler(async (req, res) => {
   const {
+    farmerId,
     farmerNumber,
     transactionDate,
     pricePerLitre,
     milkQuantity,
     milkType,
     transactionAmount,
+    snfPercentage,
+    fatPercentage,
+    transactionTime,
   } = req.body;
 
-  const farmer = await Farmer.findOne({ mobileNumber: farmerNumber });
+  const farmer = await Farmer.findOne({ farmerId: farmerId, subAdmin: req.subAdmin._id });
   if (!farmer) {
-    throw new ApiError(404, "Enter farmer mobile not found");
+    throw new ApiError(404, "Farmer with this Id in this branch not found");
   }
 
   if (!transactionDate || !pricePerLitre || !milkQuantity) {
@@ -32,45 +36,50 @@ const addMilk = asyncHandler(async (req, res) => {
   if (pricePerLitre < 0 || milkQuantity < 0) {
     throw new ApiError(400, "Amount and Quantity cannot be negative");
   }
+  const loanIndex = farmer.loan.findIndex(loan => !loan.isDeleted && loan.loanAmount > 0);
 
-  let loanArraySize = farmer.loan.length;
+  if(loanIndex !== -1){
+    if (transactionAmount >= farmer.totalLoanRemaining) {
+  
+      farmer.loan[loanIndex].history.push({
+        changedAt: new Date(),
+        loanDate: farmer.loan[loanIndex].loanDate,
+        loanAmount: farmer.loan[loanIndex].loanAmount,
+        operation: "deduct",
+      });
+      farmer.totalLoanRemaining = 0;
+      farmer.loan[loanIndex].loanAmount = 0;
+      farmer.loan[loanIndex].isDeleted = true;
+  
+      farmer.loan[loanIndex].history.push({
+        changedAt: new Date(),
+        loanDate: farmer.loan[loanIndex].loanDate,
+        loanAmount: farmer.loan[loanIndex].loanAmount,
+        operation: "delete",
+      });
+    } else {
+  
+      farmer.loan[loanIndex].history.push({
+        changedAt: new Date(),
+        loanDate: farmer.loan[loanIndex].loanDate,
+        loanAmount: farmer.loan[loanIndex].loanAmount,
+        operation: "deduct",
+      });
 
-  if (transactionAmount >= farmer.totalLoanRemaining) {
-    farmer.totalLoanRemaining = 0;
-    farmer.loan[loanArraySize - 1].loanAmount = 0;
-    farmer.loan[loanArraySize - 1].isDeleted = true;
-
-    farmer.loan[loanArraySize - 1].history.push({
-      changedAt: new Date(),
-      loanDate: farmer.loan[loanArraySize - 1].loanDate,
-      loanAmount: farmer.loan[loanArraySize - 1].loanAmount,
-      operation: "deduct",
-    });
-
-    farmer.loan[loanArraySize - 1].history.push({
-      changedAt: new Date(),
-      loanDate: farmer.loan[loanArraySize - 1].loanDate,
-      loanAmount: farmer.loan[loanArraySize - 1].loanAmount,
-      operation: "delete",
-    });
-  } else {
-    farmer.totalLoanRemaining = farmer.totalLoanRemaining - transactionAmount;
-    farmer.loan[loanArraySize - 1].loanAmount =
-      farmer.loan[loanArraySize - 1].loanAmount - transactionAmount;
-
-    farmer.loan[loanArraySize - 1].history.push({
-      changedAt: new Date(),
-      loanDate: farmer.loan[loanArraySize - 1].loanDate,
-      loanAmount: farmer.loan[loanArraySize - 1].loanAmount,
-      operation: "deduct",
-    });
+      farmer.totalLoanRemaining = farmer.totalLoanRemaining - transactionAmount;
+      farmer.loan[loanIndex].loanAmount =
+        farmer.loan[loanIndex].loanAmount - transactionAmount;
+    }
   }
-
   farmer.transaction.push({
     transactionDate,
     transactionAmount,
     milkQuantity,
     milkType,
+    snf: snfPercentage,
+    fat:fatPercentage,
+    transactionTime,
+    pricePerLitre
   });
 
   const savedFarmer = await farmer.save();
@@ -94,6 +103,7 @@ const getAllMilk = asyncHandler(async (req, res) => {
     // Include mobileNumber as farmerNumber so frontend can flatten the data properly
     let milk = {
       farmerName: farmer.farmerName,
+      farmerId: farmer.farmerId ,
       mobileNumber: farmer.mobileNumber,
       transaction: farmer.transaction,
     };
@@ -107,42 +117,106 @@ const getAllMilk = asyncHandler(async (req, res) => {
 
 // Update Milk Transaction
 const updateMilkTransaction = asyncHandler(async (req, res) => {
-  const { farmerNumber, transactionId } = req.params;
+  const { farmerId, transactionId } = req.params;
   const { transactionDate, pricePerLitre, milkQuantity, milkType } = req.body;
 
   if (!transactionDate || !pricePerLitre || !milkQuantity) {
     throw new ApiError(400, "All fields are required");
   }
 
-  const farmer = await Farmer.findOne({ mobileNumber: farmerNumber });
-  if (!farmer) {
-    throw new ApiError(404, "Farmer not found");
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // 1️⃣ Find the farmer
+    const farmer = await Farmer.findOne({ farmerId: farmerId, subAdmin: req.subAdmin._id }).session(session);
+    if (!farmer) {
+      throw new ApiError(404, "Farmer not found");
+    }
+
+    // 2️⃣ Find the transaction
+    const transaction = farmer.transaction.id(transactionId);
+    if (!transaction) {
+      throw new ApiError(404, "Milk transaction not found");
+    }
+
+    // 3️⃣ Store the original transaction amount
+    const oldTransactionAmount = transaction.transactionAmount;
+
+    // 4️⃣ Update the transaction details
+    transaction.transactionDate = new Date(transactionDate);
+    transaction.milkQuantity = milkQuantity;
+    transaction.milkType = milkType;
+    transaction.transactionAmount = pricePerLitre * milkQuantity;
+    const newTransactionAmount = transaction.transactionAmount;
+
+    // 5️⃣ Handle Loan Adjustment only if transactionAmount changes
+    if (oldTransactionAmount !== newTransactionAmount) {
+      let amountDifference = newTransactionAmount - oldTransactionAmount;
+
+      if (farmer.totalLoanRemaining > 0) {
+        let remainingToAdjust = amountDifference;
+
+        // 6️⃣ Process loans FIFO (oldest first)
+        for (let loan of farmer.loan) {
+          if (!loan.isDeleted && loan.loanAmount > 0) {
+            let adjustment = Math.min(remainingToAdjust, loan.loanAmount);
+
+            // 🔹 Reverse old deduction if decreasing transaction amount
+            if (amountDifference < 0) {
+              loan.loanAmount += Math.abs(adjustment);
+            } 
+            // 🔹 Deduct new amount if increasing transaction amount
+            else {
+              loan.loanAmount -= adjustment;
+            }
+
+            // 🔹 Ensure loan doesn't go negative
+            if (loan.loanAmount <= 0) {
+              loan.isDeleted = true;
+              loan.loanAmount = 0;
+            }
+
+            // 🔹 Track history
+            loan.history.push({
+              changedAt: new Date(),
+              loanDate: loan.loanDate,
+              loanAmount: adjustment,
+              operation: amountDifference < 0 ? "revert" : "deduct",
+            });
+
+            // 🔹 Update total loan values
+            farmer.totalLoanRemaining -= adjustment;
+            if (amountDifference < 0) {
+              farmer.totalLoanRemaining += adjustment;
+            }
+
+            remainingToAdjust -= adjustment;
+            if (remainingToAdjust === 0) break;
+          }
+        }
+      }
+    }
+
+    // 7️⃣ Save updated farmer and transaction details
+    await farmer.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.status(200).json(new ApiResponse(200, farmer, "Milk transaction updated successfully"));
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw new ApiError(500, "Error updating milk transaction", error);
   }
-
-  const transaction = farmer.transaction.id(transactionId);
-  if (!transaction) {
-    throw new ApiError(404, "Milk transaction not found");
-  }
-
-  transaction.transactionDate = new Date(transactionDate);
-  transaction.milkQuantity = milkQuantity;
-  transaction.milkType = milkType;
-  transaction.transactionAmount = pricePerLitre * milkQuantity;
-
-  const savedFarmer = await farmer.save();
-
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(200, savedFarmer, "Milk transaction updated successfully")
-    );
 });
 
 // Delete Milk Transaction
 const deleteMilkTransaction = asyncHandler(async (req, res) => {
-  const { farmerNumber, transactionId } = req.params;
+  const { farmerId, transactionId } = req.params;
 
-  const farmer = await Farmer.findOne({ mobileNumber: farmerNumber });
+  const farmer = await Farmer.findOne({ farmerId: farmerId , subAdmin: req.subAdmin._id });
   if (!farmer) {
     throw new ApiError(404, "Farmer not found");
   }
