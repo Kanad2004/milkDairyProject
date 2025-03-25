@@ -5,7 +5,7 @@ import { Transaction } from "../model/Transaction.js";
 import fs from "fs";
 import XLSX from "xlsx";
 import {Branch} from "../model/Branch.js";
-
+import {SubAdmin} from "../model/SubAdmin.js";
 // 1. Save a new Transaction
 export const saveTransaction = asyncHandler(async (req, res) => {
   const { customerName, mobileNumber, items, time } = req.body;
@@ -205,7 +205,7 @@ export const generateReport = async (req, res) => {
 
     // Ensure subAdmin and admin fields are populated
     const transactions = await Transaction.find(query)
-      .populate("customer items.product admin subAdmin branch");
+      .populate("items.product");
 
     if (!transactions.length) {
       return res.status(404).json({ message: "No transactions found" });
@@ -217,7 +217,8 @@ export const generateReport = async (req, res) => {
     // Prepare data for Excel
     const reportData = transactions.map((transaction) => ({
       TransactionID: transaction._id ? transaction._id.toString() : "N/A",
-      CustomerMobileNumber: transaction.mobileNumber || "N/A",
+      CustomerName: transaction.customerName ? transaction.customerName : "N/A",
+      CustomerMobileNumber: transaction.mobileNumber ? transaction.mobileNumber : "N/A",
       Amount: transaction.amount || "N/A",
       TransactionDate: transaction.time
         ? transaction.time.toISOString().replace("T", " ").slice(0, 19)
@@ -261,7 +262,78 @@ export const generateReport = async (req, res) => {
   }
 };
 
+export const getTransactionByMobileNumber= asyncHandler(async (req, res) => {
+  try{
+  const { mobileNumber } = req.params;
+  const transaction = await Transaction.findOne({ mobileNumber });
+  if (!transaction) {
+    throw new ApiError(404, "Transaction not found");
+  }
+  // if (req.subAdmin) {
+  //   query.subAdmin = req.subAdmin._id;
+  // }
 
+  // // Ensure subAdmin and admin fields are populated
+  // const transactions = await Transaction.find(query)
+  //   .populate("items.product");
+
+  if (!transaction.length) {
+    return res.status(404).json({ message: "No transactions found" });
+  }
+  
+  // Ensure branch is retrieved properly
+  const branch = req.subAdmin ? await Branch.findById(req.subAdmin.branch) : null;
+  
+  // Prepare data for Excel
+  const reportData = {
+    TransactionID: transaction._id ? transaction._id.toString() : "N/A",
+    CustomerName: transaction.customerName ? transaction.customerName : "N/A",
+    CustomerMobileNumber: transaction.mobileNumber ? transaction.mobileNumber : "N/A",
+    Amount: transaction.amount || "N/A",
+    TransactionDate: transaction.time
+      ? transaction.time.toISOString().replace("T", " ").slice(0, 19)
+      : "N/A", 
+    AdminID: transaction.admin ? transaction.admin._id.toString() : "N/A",
+    SubAdminID: transaction.subAdmin ? transaction.subAdmin._id.toString() : "N/A",
+    BranchID: branch ? branch.branchId : "N/A",
+    Items: transaction.items.length
+      ? transaction.items
+          .map((item) => `Product: ${item.product}, Quantity: ${item.quantity}`)
+          .join("; ")
+      : "N/A",
+  };
+  
+
+  // Create Excel file
+  const workbook = XLSX.utils.book_new();
+  const worksheet = XLSX.utils.json_to_sheet(reportData);
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
+
+  // Define file path
+  const filePath = `./reports/${type}_transactions_${
+    branch ? `branch_${branch.branchName}_` : ""
+  }${Date.now()}.xlsx`;
+
+  // Write to file
+  XLSX.writeFile(workbook, filePath);
+
+  // Send file as response
+  res.download(filePath, (err) => {
+    if (err) {
+      console.error("Error sending file:", err);
+      return res.status(500).json({ message: "Error downloading file" });
+    }
+    fs.unlink(filePath, (err) => {
+      if (err) console.error("Error deleting file:", err);
+    });
+  });
+}
+ catch (error) {
+  console.error("Error generating report:", error);
+  res.status(500).json({ message: error.message });
+}});
+
+import mongoose from "mongoose";
 // Generate Combined Report Function
 //This is for the Admin
 export const generateCombinedReport = async (req, res) => {
@@ -269,15 +341,25 @@ export const generateCombinedReport = async (req, res) => {
     const { type } = req.params;
     const { startDate, endDate } = getDateRange(type);
 
-    // Fetch transactions for all branches
-    const transactions = await Transaction.find({
+    const query = {
       time: { $gte: startDate, $lte: endDate },
-    }).populate("items subAdmin");
+    };
+    if (req.subAdmin) {
+      query.subAdmin = req.subAdmin._id;
+    }
+
+    // Ensure subAdmin and admin fields are populated
+    const transactions = await Transaction.find(query)
+      .populate("items.product");
+
+
 
     if (!transactions.length) {
       return res.status(404).json({ message: "No transactions found" });
     }
-
+ // Ensure branch is retrieved properly
+ const branch = req.subAdmin ? await Branch.findById(req.subAdmin.branch) : null;
+    
 
     // Prepare data for Excel
     const reportData = transactions.map((transaction) => ({
@@ -287,7 +369,7 @@ export const generateCombinedReport = async (req, res) => {
       TransactionDate: transaction.time.toISOString().replace("T", " ").slice(0, 19), // Format as YYYY-MM-DD HH:mm:ss
       AdminID: transaction.admin ? transaction.admin._id : "N/A",
       SubAdminID: transaction.subAdmin ? transaction.subAdmin._id : "N/A",
-      BranchNAME: transaction.branch ? transaction.branch.branchName : "N/A",
+      BranchName: branch ? branch.branchName : "N/A",
       Items: transaction.items.map((item) =>
         `Product: ${item.product ? item.product.name : "N/A"}, Quantity: ${item.quantity}`
       ).join("; "),
@@ -317,6 +399,84 @@ export const generateCombinedReport = async (req, res) => {
     });
   } catch (error) {
     console.error("Error generating combined report:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const generateReportAdmin = async (req, res) => {
+  try {
+    const { branchId, type } = req.params;
+      console.log(branchId);
+    const { startDate, endDate } = getDateRange(type);
+
+    // Convert branchId to ObjectId
+    if (!mongoose.Types.ObjectId.isValid(branchId)) {
+      return res.status(400).json({ message: "Invalid branch ID format" });
+    }
+
+    const branch =  Branch.findById(branchId);
+    
+    // Check if branch exists
+    if (!branch) {
+      return res.status(404).json({ message: "Branch not found" });
+    }
+    console.log("Found branch:", branch); 
+
+    const query = { time: { $gte: startDate, $lte: endDate } };
+
+    const subAdmin = await SubAdmin.findOne({ branch: branch._id });
+    if (subAdmin) {
+      query.subAdmin = subAdmin._id;
+    }
+
+    const transactions = await Transaction.find(query)
+      .populate("items.product") // Populate Category, not Product
+      .populate("subAdmin"); // Populate subAdmin
+
+    if (!transactions.length) {
+      return res.status(404).json({ message: "No transactions found" });
+    }
+
+    const reportData = transactions.map((transaction) => ({
+      TransactionID: transaction._id?.toString() || "N/A",
+      CustomerName: transaction.customerName || "N/A",
+      CustomerMobileNumber: transaction.mobileNumber || "N/A",
+      Amount: transaction.amount || "N/A",
+      TransactionDate: transaction.time
+        ? transaction.time.toISOString().replace("T", " ").slice(0, 19)
+        : "N/A",
+      AdminID: transaction.admin?._id?.toString() || "N/A",
+      SubAdminID: subAdmin ? subAdmin._id.toString() : "N/A",
+      BranchID: branch ? branch._id.toString() : "N/A",
+      Items: transaction.items.length
+        ? transaction.items
+            .map((item) => `Product: ${item.product.name}, Quantity: ${item.quantity}`)
+            .join("; ")
+        : "N/A",
+    }));
+
+    // Create Excel file
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(reportData);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
+
+    const filePath = `./reports/${branch.branchName || "unknown"}_transactions_${Date.now()}.xlsx`;
+
+    // Write to file
+    XLSX.writeFile(workbook, filePath);
+
+    // Send file as response
+    res.download(filePath, (err) => {
+      if (err) {
+        console.error("Error sending file:", err);
+        return res.status(500).json({ message: "Error downloading file" });
+      }
+      fs.unlink(filePath, (err) => {
+        if (err) console.error("Error deleting file:", err);
+      });
+    });
+  } catch (error) {
+    console.error("Error generating report:", error);
     res.status(500).json({ message: error.message });
   }
 };

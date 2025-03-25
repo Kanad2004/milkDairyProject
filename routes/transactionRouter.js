@@ -6,6 +6,8 @@ import {
   updateTransactionById,
   generateReport,
   generateCombinedReport,
+  getTransactionByMobileNumber,
+  generateReportAdmin,
 } from "../controllers/transactionController.js";
 import {
   authenticateAdmin,
@@ -44,6 +46,12 @@ transactionRouter.delete(
   deleteTransactionById
 );
 
+transactionRouter.get(
+  "/subAdmin/customer-reports/:mobileNumber",
+  authenticateSubAdmin,
+  authorizeRoleSubAdmin(["subAdmin"]),
+  getTransactionByMobileNumber
+);
 //subadmin
 transactionRouter.get(
   "/subAdmin/customer-reports/:type",
@@ -54,16 +62,17 @@ transactionRouter.get(
 
 //admin
 transactionRouter.get(
-  "/admin/customer-reports/:type",
+  "/admin/customer-reports/:branchId/:type",
   authenticateAdmin,
   authorizeRoleAdmin(["Admin"]),
-  generateReport
+  generateReportAdmin
 );
-transactionRouter.get(
-  "/admin/customer-reports/all",
-  authenticateAdmin,
-  authorizeRoleAdmin(["Admin"]),
-  generateCombinedReport
-);
+
+// transactionRouter.get(
+//   "/admin/customer-reports/all",
+//   authenticateAdmin,
+//   authorizeRoleAdmin(["Admin"]),
+//   generateCombinedReport
+// );
 
 export default transactionRouter;

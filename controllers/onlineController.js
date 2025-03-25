@@ -10,6 +10,8 @@ const client = twilio(
 
 const sendOtp = async (req, res) => {
   let { phone, name } = req.body;
+  console.log("req.body", req.body);
+
   phone = `+91 ${phone.slice(0, 5)} ${phone.slice(5)}`;
   if (!phone)
     return res.status(400).json({ error: "Phone number is required" });
@@ -17,7 +19,8 @@ const sendOtp = async (req, res) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate OTP
 
   // Save OTP in MongoDB
-  await Otp.create({ phone, otp });
+  const createdOtp = await Otp.create({ phone, otp });
+  console.log("createdOtp", createdOtp);
 
   // Send OTP via Twilio
   try {
@@ -31,6 +34,8 @@ const sendOtp = async (req, res) => {
       .status(200)
       .send(new ApiResponse(200, "", "Otp sent successfully"));
   } catch (error) {
+    console.log(error);
+
     res
       .status(500)
       .json({ error: "Failed to send OTP", details: error.message });

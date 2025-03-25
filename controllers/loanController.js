@@ -2,18 +2,18 @@ import { Farmer } from "../model/Farmer.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import exceljs from "exceljs"
+import exceljs from "exceljs";
 import path from "path";
 import fs from "fs";
 // Create a new loan for a farmer
 const createLoan = asyncHandler(async (req, res) => {
-  const { mobileNumber, loanAmount, loanDate } = req.body;
-
-  if (!mobileNumber || !loanAmount || !loanDate) {
+  const { farmerId, loanAmount, loanDate } = req.body;
+  const subAdmin = req.subAdmin._id;
+  if (!farmerId || !loanAmount || !loanDate) {
     throw new ApiError(400, "All fields are required");
   }
 
-  const farmer = await Farmer.findOne({ mobileNumber });
+  const farmer = await Farmer.findOne({ famrerId: farmerId, subAdmin });
   if (!farmer) {
     throw new ApiError(404, "Farmer not found");
   }
@@ -26,7 +26,7 @@ const createLoan = asyncHandler(async (req, res) => {
   farmer.loan.push(loan);
 
   // Update totals accordingly
-  farmer.totalLoan += Number(loanAmount);
+  // farmer.totalLoan += Number(loanAmount);
   farmer.totalLoanRemaining += Number(loanAmount);
 
   await farmer.save();
@@ -72,12 +72,12 @@ const updateLoan = asyncHandler(async (req, res) => {
   }
 
   // Save the current state of the loan into the history array before updating
-  farmer.loan[loanIndex].history.push({
-    changedAt: new Date(),
-    loanDate: farmer.loan[loanIndex].loanDate,
-    loanAmount: farmer.loan[loanIndex].loanAmount,
-    operation: "update",
-  });
+  // farmer.loan[loanIndex].history.push({
+  //   changedAt: new Date(),
+  //   loanDate: farmer.loan[loanIndex].loanDate,
+  //   loanAmount: farmer.loan[loanIndex].loanAmount,
+  //   operation: "update",
+  // });
 
   const oldLoanAmount = Number(farmer.loan[loanIndex].loanAmount);
 
@@ -86,7 +86,7 @@ const updateLoan = asyncHandler(async (req, res) => {
   farmer.loan[loanIndex].loanAmount = loanAmount;
 
   // Adjust totals to reflect the updated loan amount
-  farmer.totalLoan = farmer.totalLoan - oldLoanAmount + Number(loanAmount);
+  // farmer.totalLoan = farmer.totalLoan - oldLoanAmount + Number(loanAmount);
   farmer.totalLoanRemaining =
     farmer.totalLoanRemaining - oldLoanAmount + Number(loanAmount);
 
@@ -184,7 +184,7 @@ const deleteLoan = asyncHandler(async (req, res) => {
   });
 
   // Update totals to remove the deleted loan's amount
-  farmer.totalLoan -= Number(farmer.loan[loanIndex].loanAmount);
+  // farmer.totalLoan -= Number(farmer.loan[loanIndex].loanAmount);
   farmer.totalLoanRemaining -= Number(farmer.loan[loanIndex].loanAmount);
 
   // Mark the loan as deleted (soft delete)
@@ -246,7 +246,9 @@ const getDateRange = (type) => {
 
 // Generate loan report for all farmers
 const generateLoanReportAdmin = asyncHandler(async (req, res) => {
-  const farmers = await Farmer.find({}).select("loan farmerName mobileNumber address totalLoan totalLoanPaidBack totalLoanRemaining");
+  const farmers = await Farmer.find({}).select(
+    "loan farmerName mobileNumber address totalLoan totalLoanPaidBack totalLoanRemaining"
+  );
 
   if (!farmers || farmers.length === 0) {
     throw new ApiError(404, "No loans found");
@@ -318,7 +320,7 @@ const generateLoanReportSubAdmin = asyncHandler(async (req, res) => {
   };
 
   if (req.subAdmin) {
-    query.subAdmin = (req.subAdmin._id);
+    query.subAdmin = req.subAdmin._id;
   }
 
   const farmers = await Farmer.aggregate([
@@ -347,7 +349,7 @@ const generateLoanReportSubAdmin = asyncHandler(async (req, res) => {
     },
   ]);
 
-  console.log("farmers: " , farmers[0].loan);
+  console.log("farmers: ", farmers[0].loan);
   if (!farmers || farmers.length === 0) {
     throw new ApiError(404, "No loans found in the given date range");
   }
@@ -397,17 +399,18 @@ const generateLoanReportSubAdmin = asyncHandler(async (req, res) => {
 
 // Generate loan report by farmer ID
 const generateLoanReportByMobileNumber = asyncHandler(async (req, res) => {
-  const { mobileNumber } = req.params;
+  const { farmerId } = req.params;
 
-  const farmer = await Farmer.findOne({ mobileNumber }).select(
+  const farmer = await Farmer.findOne({
+    farmerId,
+    subAdmin: req.subAdmin._id,
+  }).select(
     "loan farmerName mobileNumber address totalLoan totalLoanPaidBack totalLoanRemaining"
   );
-  
 
   if (!farmer || !farmer.loan?.length) {
     throw new ApiError(404, "No loans found for the specified farmer");
   }
-  
 
   const workbook = new exceljs.Workbook();
   const worksheet = workbook.addWorksheet("Farmer Loans");
@@ -430,7 +433,7 @@ const generateLoanReportByMobileNumber = asyncHandler(async (req, res) => {
   // Add rows for each loan of the specified farmer
   farmer.loan.forEach((loan) => {
     worksheet.addRow({
-      farmerId: farmer._id,
+      farmerId: farmer.farmerId,
       farmerName: farmer.farmerName,
       mobileNumber: farmer.mobileNumber,
       address: farmer.address,
@@ -453,15 +456,22 @@ const generateLoanReportByMobileNumber = asyncHandler(async (req, res) => {
   await workbook.xlsx.writeFile(filePath);
 
   return res.download(filePath, `loans-${farmer._id}.xlsx`, (err) => {
-      if (err) {
-          throw new ApiError(500, "Error occurred while downloading the file");
-      }
+    if (err) {
+      throw new ApiError(500, "Error occurred while downloading the file");
+    }
 
-      // Clean up file after download
-      setTimeout(() => fs.unlinkSync(filePath), 5000);
-
+    // Clean up file after download
+    setTimeout(() => fs.unlinkSync(filePath), 5000);
   });
 });
 
-export { createLoan, getAllLoans, updateLoan, deleteLoan, deductLoan, generateLoanReportAdmin, generateLoanReportSubAdmin, generateLoanReportByMobileNumber };
-
+export {
+  createLoan,
+  getAllLoans,
+  updateLoan,
+  deleteLoan,
+  deductLoan,
+  generateLoanReportAdmin,
+  generateLoanReportSubAdmin,
+  generateLoanReportByMobileNumber,
+};
