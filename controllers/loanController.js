@@ -26,7 +26,7 @@ const createLoan = asyncHandler(async (req, res) => {
   farmer.loan.push(loan);
 
   // Update totals accordingly
-  farmer.totalLoan += Number(loanAmount);
+  // farmer.totalLoan += Number(loanAmount);
   farmer.totalLoanRemaining += Number(loanAmount);
 
   await farmer.save();
@@ -72,12 +72,12 @@ const updateLoan = asyncHandler(async (req, res) => {
   }
 
   // Save the current state of the loan into the history array before updating
-  farmer.loan[loanIndex].history.push({
-    changedAt: new Date(),
-    loanDate: farmer.loan[loanIndex].loanDate,
-    loanAmount: farmer.loan[loanIndex].loanAmount,
-    operation: "update",
-  });
+  // farmer.loan[loanIndex].history.push({
+  //   changedAt: new Date(),
+  //   loanDate: farmer.loan[loanIndex].loanDate,
+  //   loanAmount: farmer.loan[loanIndex].loanAmount,
+  //   operation: "update",
+  // });
 
   const oldLoanAmount = Number(farmer.loan[loanIndex].loanAmount);
 
@@ -86,7 +86,7 @@ const updateLoan = asyncHandler(async (req, res) => {
   farmer.loan[loanIndex].loanAmount = loanAmount;
 
   // Adjust totals to reflect the updated loan amount
-  farmer.totalLoan = farmer.totalLoan - oldLoanAmount + Number(loanAmount);
+  // farmer.totalLoan = farmer.totalLoan - oldLoanAmount + Number(loanAmount);
   farmer.totalLoanRemaining =
     farmer.totalLoanRemaining - oldLoanAmount + Number(loanAmount);
 
@@ -184,7 +184,7 @@ const deleteLoan = asyncHandler(async (req, res) => {
   });
 
   // Update totals to remove the deleted loan's amount
-  farmer.totalLoan -= Number(farmer.loan[loanIndex].loanAmount);
+  // farmer.totalLoan -= Number(farmer.loan[loanIndex].loanAmount);
   farmer.totalLoanRemaining -= Number(farmer.loan[loanIndex].loanAmount);
 
   // Mark the loan as deleted (soft delete)

@@ -17,14 +17,14 @@ const embeddedProductSchema = new mongoose.Schema({
   //   type: String,
   //   required: true, // Uncomment if needed
   // },
-  snf: {
-    type: Number,
-    required: true,
-  },
-  fat: {
-    type: Number,
-    required: true,
-  },
+  // snf: {
+  //   type: Number,
+  //   required: true,
+  // },
+  // fat: {
+  //   type: Number,
+  //   required: true,
+  // },
   productInstock: {
     type: Boolean,
     default: true,

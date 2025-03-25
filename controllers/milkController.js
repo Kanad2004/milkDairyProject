@@ -33,6 +33,40 @@ const addMilk = asyncHandler(async (req, res) => {
   }
 
   let transactionAmount = pricePerLitre * milkQuantity;
+
+  let loanArraySize = farmer.loan.length;
+
+  if (transactionAmount >= farmer.totalLoanRemaining) {
+    farmer.totalLoanRemaining = 0;
+    farmer.loan[loanArraySize - 1].loanAmount = 0;
+    farmer.loan[loanArraySize - 1].isDeleted = true;
+
+    farmer.loan[loanArraySize - 1].history.push({
+      changedAt: new Date(),
+      loanDate: farmer.loan[loanArraySize - 1].loanDate,
+      loanAmount: farmer.loan[loanArraySize - 1].loanAmount,
+      operation: "deduct",
+    });
+
+    farmer.loan[loanArraySize - 1].history.push({
+      changedAt: new Date(),
+      loanDate: farmer.loan[loanArraySize - 1].loanDate,
+      loanAmount: farmer.loan[loanArraySize - 1].loanAmount,
+      operation: "delete",
+    });
+  } else {
+    farmer.totalLoanRemaining = farmer.totalLoanRemaining - transactionAmount;
+    farmer.loan[loanArraySize - 1].loanAmount =
+      farmer.loan[loanArraySize - 1].loanAmount - transactionAmount;
+
+    farmer.loan[loanArraySize - 1].history.push({
+      changedAt: new Date(),
+      loanDate: farmer.loan[loanArraySize - 1].loanDate,
+      loanAmount: farmer.loan[loanArraySize - 1].loanAmount,
+      operation: "deduct",
+    });
+  }
+
   farmer.transaction.push({
     transactionDate,
     transactionAmount,
@@ -186,7 +220,6 @@ const getAllFarmersTransactionReportOfBranch = async (req, res, next) => {
     // let query = { "transaction.transactionDate": dateFilter };
     let query = { transaction: { $elemMatch: dateFilter } };
 
-
     // If SubAdmin, restrict access to their branch only
     if (req.subAdmin) {
       query.subAdmin = req.subAdmin._id;
@@ -219,15 +252,16 @@ const getFarmerTransactionReportByMobileNumber = async (req, res, next) => {
     if (!mobileNumber) {
       return next(new ApiError(400, "Mobile number is required"));
     }
-    
+
     const farmer = await Farmer.findOne({ mobileNumber: String(mobileNumber) });
 
     console.log(1);
     if (!farmer || !farmer.transaction || farmer.transaction.length === 0) {
-      return next(new ApiError(404, "No transactions found for this mobile number"));
+      return next(
+        new ApiError(404, "No transactions found for this mobile number")
+      );
     }
-    
-    
+
     // Create an Excel workbook
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Farmer Transactions");
@@ -294,21 +328,23 @@ const getFarmerTransactionReportByMobileNumber = async (req, res, next) => {
  */
 const getAllFarmersTransactionReportsOfBranch = async (req, res, next) => {
   try {
-    const subAdminId  = req.subAdmin._id;
+    const subAdminId = req.subAdmin._id;
 
     const subAdmin = await SubAdmin.findById(subAdminId);
-    
-    const branch = await Branch.find({branch: subAdmin.branch}) ;
+
+    const branch = await Branch.find({ branch: subAdmin.branch });
 
     if (!subAdminId) {
       return next(new ApiError(400, "Branch ID is required"));
     }
 
-    const farmers = await Farmer.find({ subAdmin : subAdminId }).select("farmerName mobileNumber transaction");
+    const farmers = await Farmer.find({ subAdmin: subAdminId }).select(
+      "farmerName mobileNumber transaction"
+    );
 
     if (!farmers.length) {
       return next(new ApiError(404, "No farmers found in this branch"));
-    } 
+    }
     console.log(1);
 
     let transactions = [];
@@ -354,7 +390,10 @@ const getAllFarmersTransactionReportsOfBranch = async (req, res, next) => {
     });
     console.log(3);
     // Define file path
-    const filePath = path.join("reports", `Branch_Transactions_${branch.branchId}.xlsx`);
+    const filePath = path.join(
+      "reports",
+      `Branch_Transactions_${branch.branchId}.xlsx`
+    );
     console.log(4);
     // Ensure reports directory exists
     if (!fs.existsSync("reports")) {
@@ -365,11 +404,15 @@ const getAllFarmersTransactionReportsOfBranch = async (req, res, next) => {
     await workbook.xlsx.writeFile(filePath);
     console.log(4);
     // Send file as response
-    res.download(filePath, `Branch_Transactions_${branch.branchId}.xlsx`, (err) => {
-      if (err) {
-        next(new ApiError(500, "Error downloading the file"));
+    res.download(
+      filePath,
+      `Branch_Transactions_${branch.branchId}.xlsx`,
+      (err) => {
+        if (err) {
+          next(new ApiError(500, "Error downloading the file"));
+        }
       }
-    });
+    );
   } catch (error) {
     next(new ApiError(500, "Internal Server error"));
   }
