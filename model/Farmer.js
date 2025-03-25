@@ -26,7 +26,7 @@ const loanSchema = new mongoose.Schema({
 // Main Farmer schema
 const farmerSchema = new mongoose.Schema(
   {
-    famrerId : { type: Number, required: true, unique: true },
+    famrerId : { type: Number, required: true },
     farmerName: { type: String, required: true },
     mobileNumber: { type: String, required: true, unique: true },
     address: { type: String, required: true },

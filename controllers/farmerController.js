@@ -6,36 +6,48 @@ import xlsx from "xlsx";
 import path from "path";
 
 const addFarmer = asyncHandler(async (req, res) => {
-  const { farmerName, mobileNumber, address, milkType, gender, joiningDate } =
-    req.body;
+  const {
+    farmerId,
+    farmerName,
+    mobileNumber,
+    address,
+    milkType,
+    gender,
+    joiningDate,
+  } = req.body;
   const subAdmin = req.subAdmin._id;
 
   // Validate that all required fields are provided and not empty.
   // For string fields, we trim the value to avoid spaces being considered valid.
   if (
-    [farmerName, mobileNumber, address, milkType, gender, joiningDate].some(
-      (field) => {
-        return !field || (typeof field === "string" && field.trim() === "");
-      }
-    )
+    [
+      farmerId,
+      farmerName,
+      mobileNumber,
+      address,
+      milkType,
+      gender,
+      joiningDate,
+    ].some((field) => {
+      return !field || (typeof field === "string" && field.trim() === "");
+    })
   ) {
     throw new ApiError(400, "All fields are required");
   }
 
   // Check if a farmer with the same mobile number already exists
   const existingFarmer = await Farmer.findOne({
-    mobileNumber: mobileNumber,
+    subAdmin,
+    farmerId,
   });
   if (existingFarmer) {
-    throw new ApiError(
-      409,
-      "A farmer with the same mobile number already exists"
-    );
+    throw new ApiError(409, "A farmer with the same id exists");
   }
 
   // Create a new farmer with the provided data.
   // For string fields, we trim the values. For joiningDate, convert it to a Date object if needed.
   const newFarmer = await Farmer.create({
+    farmerId: farmerId,
     farmerName: farmerName,
     mobileNumber: mobileNumber,
     address: address,
@@ -88,10 +100,18 @@ const updateFarmer = asyncHandler(async (req, res) => {
     );
   }
 
-  const { farmerName, mobileNumber, address, milkType, gender, joiningDate } =
-    req.body;
+  const {
+    farmerId,
+    farmerName,
+    mobileNumber,
+    address,
+    milkType,
+    gender,
+    joiningDate,
+  } = req.body;
 
   if (
+    !farmerId ||
     !farmerName ||
     !mobileNumber ||
     !address ||
@@ -102,6 +122,7 @@ const updateFarmer = asyncHandler(async (req, res) => {
     throw new ApiError(400, "All fields are required");
   }
 
+  farmer.famrerId = farmerId;
   farmer.farmerName = farmerName;
   farmer.mobileNumber = mobileNumber;
   farmer.address = address;
@@ -144,6 +165,7 @@ const exportFarmerDetail = async (req, res) => {
 
     const data = [
       {
+        "Farmer Id": farmer.famrerId,
         "Farmer Name": farmer.farmerName,
         "Mobile Number": farmer.mobileNumber,
         Address: farmer.address,

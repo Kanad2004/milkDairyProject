@@ -17,6 +17,7 @@ const addMilk = asyncHandler(async (req, res) => {
     pricePerLitre,
     milkQuantity,
     milkType,
+    transactionAmount,
   } = req.body;
 
   const farmer = await Farmer.findOne({ mobileNumber: farmerNumber });
@@ -31,8 +32,6 @@ const addMilk = asyncHandler(async (req, res) => {
   if (pricePerLitre < 0 || milkQuantity < 0) {
     throw new ApiError(400, "Amount and Quantity cannot be negative");
   }
-
-  let transactionAmount = pricePerLitre * milkQuantity;
 
   let loanArraySize = farmer.loan.length;
 
