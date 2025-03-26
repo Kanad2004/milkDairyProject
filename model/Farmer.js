@@ -18,6 +18,7 @@ const loanHistorySchema = new mongoose.Schema(
 // Schema for each loan record
 const loanSchema = new mongoose.Schema({
   loanDate: { type: Date, required: true },
+  originalAmount: {type : Number , required: true},
   loanAmount: { type: Number, required: true },
   isDeleted: { type: Boolean, default: false },
   history: [loanHistorySchema],

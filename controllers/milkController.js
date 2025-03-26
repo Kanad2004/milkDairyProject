@@ -41,15 +41,17 @@ const addMilk = asyncHandler(async (req, res) => {
   if(loanIndex !== -1){
     if (transactionAmount >= farmer.totalLoanRemaining) {
   
+      farmer.totalLoanRemaining = 0;
+      farmer.totalLoanPaidBack += farmer.loan[loanIndex].loanAmount;
+      farmer.loan[loanIndex].loanAmount = 0;
+      farmer.loan[loanIndex].isDeleted = true;
+      
       farmer.loan[loanIndex].history.push({
         changedAt: new Date(),
         loanDate: farmer.loan[loanIndex].loanDate,
         loanAmount: farmer.loan[loanIndex].loanAmount,
         operation: "deduct",
       });
-      farmer.totalLoanRemaining = 0;
-      farmer.loan[loanIndex].loanAmount = 0;
-      farmer.loan[loanIndex].isDeleted = true;
   
       farmer.loan[loanIndex].history.push({
         changedAt: new Date(),
@@ -59,16 +61,17 @@ const addMilk = asyncHandler(async (req, res) => {
       });
     } else {
   
-      farmer.loan[loanIndex].history.push({
-        changedAt: new Date(),
-        loanDate: farmer.loan[loanIndex].loanDate,
-        loanAmount: farmer.loan[loanIndex].loanAmount,
-        operation: "deduct",
-      });
-
       farmer.totalLoanRemaining = farmer.totalLoanRemaining - transactionAmount;
       farmer.loan[loanIndex].loanAmount =
-        farmer.loan[loanIndex].loanAmount - transactionAmount;
+      farmer.loan[loanIndex].loanAmount - transactionAmount;
+      farmer.totalLoanPaidBack += transactionAmount;
+
+        farmer.loan[loanIndex].history.push({
+          changedAt: new Date(),
+          loanDate: farmer.loan[loanIndex].loanDate,
+          loanAmount: farmer.loan[loanIndex].loanAmount,
+          operation: "deduct",
+        });
     }
   }
   farmer.transaction.push({
@@ -150,53 +153,57 @@ const updateMilkTransaction = asyncHandler(async (req, res) => {
     transaction.transactionAmount = pricePerLitre * milkQuantity;
     const newTransactionAmount = transaction.transactionAmount;
 
-    // 5️⃣ Handle Loan Adjustment only if transactionAmount changes
+    // 5️⃣ Handle Loan Adjustments if transactionAmount changes
     if (oldTransactionAmount !== newTransactionAmount) {
       let amountDifference = newTransactionAmount - oldTransactionAmount;
-
+    
       if (farmer.totalLoanRemaining > 0) {
-        let remainingToAdjust = amountDifference;
-
-        // 6️⃣ Process loans FIFO (oldest first)
+        let remainingToAdjust = Math.abs(amountDifference);
+        
         for (let loan of farmer.loan) {
-          if (!loan.isDeleted && loan.loanAmount > 0) {
+          if (!loan.isDeleted && loan.loanAmount > 0 && remainingToAdjust > 0) {
             let adjustment = Math.min(remainingToAdjust, loan.loanAmount);
-
-            // 🔹 Reverse old deduction if decreasing transaction amount
+    
             if (amountDifference < 0) {
-              loan.loanAmount += Math.abs(adjustment);
-            } 
-            // 🔹 Deduct new amount if increasing transaction amount
-            else {
+              // 🔹 Revert Deduction (Decrease Transaction Amount)
+              let maxRevertable = loan.history.reduce((sum, h) => h.operation === "deduct" ? sum + h.loanAmount : sum, 0);
+              let revertAmount = Math.min(adjustment, maxRevertable);
+              
+              loan.loanAmount += revertAmount;
+              farmer.totalLoanRemaining += revertAmount;
+              farmer.totalLoanPaidBack = Math.max(0, farmer.totalLoanPaidBack - revertAmount); // 🔹 Prevents negative values
+    
+              loan.history.push({
+                changedAt: new Date(),
+                loanDate: loan.loanDate,
+                loanAmount: loan.loanAmount,
+                operation: "revert",
+              });
+    
+            } else {
+              // 🔹 Deduct Loan Amount (Increase Transaction Amount)
               loan.loanAmount -= adjustment;
+              farmer.totalLoanRemaining -= adjustment;
+              farmer.totalLoanPaidBack += adjustment;
+    
+              if (loan.loanAmount <= 0) {
+                loan.isDeleted = true;
+                loan.loanAmount = 0;
+              }
+    
+              loan.history.push({
+                changedAt: new Date(),
+                loanDate: loan.loanDate,
+                loanAmount: loan.loanAmount,
+                operation: "deduct",
+              });
             }
-
-            // 🔹 Ensure loan doesn't go negative
-            if (loan.loanAmount <= 0) {
-              loan.isDeleted = true;
-              loan.loanAmount = 0;
-            }
-
-            // 🔹 Track history
-            loan.history.push({
-              changedAt: new Date(),
-              loanDate: loan.loanDate,
-              loanAmount: adjustment,
-              operation: amountDifference < 0 ? "revert" : "deduct",
-            });
-
-            // 🔹 Update total loan values
-            farmer.totalLoanRemaining -= adjustment;
-            if (amountDifference < 0) {
-              farmer.totalLoanRemaining += adjustment;
-            }
-
+    
             remainingToAdjust -= adjustment;
-            if (remainingToAdjust === 0) break;
           }
         }
       }
-    }
+    }    
 
     // 7️⃣ Save updated farmer and transaction details
     await farmer.save({ session });
@@ -211,6 +218,7 @@ const updateMilkTransaction = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Error updating milk transaction", error);
   }
 });
+
 
 // Delete Milk Transaction
 const deleteMilkTransaction = asyncHandler(async (req, res) => {

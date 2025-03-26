@@ -22,6 +22,7 @@ const createLoan = asyncHandler(async (req, res) => {
   const loan = {
     loanDate,
     loanAmount,
+    originalAmount:loanAmount,
   };
 
   farmer.loan.push(loan);
@@ -29,7 +30,6 @@ const createLoan = asyncHandler(async (req, res) => {
   // Update totals accordingly
   farmer.totalLoan += Number(loanAmount);
   farmer.totalLoanRemaining += Number(loanAmount);
-
   await farmer.save();
 
   return res
@@ -87,7 +87,7 @@ const updateLoan = asyncHandler(async (req, res) => {
   // Update the loan record
   farmer.loan[loanIndex].loanDate = loanDate;
   farmer.loan[loanIndex].loanAmount = loanAmount;
-
+  farmer.loan[loanIndex].originalAmount = loanAmount;
   // Adjust totals to reflect the updated loan amount
   farmer.totalLoan = farmer.totalLoan - oldLoanAmount + Number(loanAmount);
   farmer.totalLoanRemaining =
@@ -131,14 +131,6 @@ const deductLoan = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Loan not found");
   }
 
-  // Save the current state of the loan into the history array before updating
-  farmer.loan[loanIndex].history.push({
-    changedAt: new Date(),
-    loanDate: farmer.loan[loanIndex].loanDate,
-    loanAmount: farmer.loan[loanIndex].loanAmount,
-    operation: "deduct",
-  });
-
   const oldLoanAmount = Number(farmer.loan[loanIndex].loanAmount);
 
   if (oldLoanAmount < Number(loanAmount)) {
@@ -150,6 +142,14 @@ const deductLoan = asyncHandler(async (req, res) => {
   // Adjust totals to reflect the updated loan amount
   farmer.totalLoanPaidBack = farmer.totalLoanPaidBack + Number(loanAmount);
   farmer.totalLoanRemaining = farmer.totalLoanRemaining - Number(loanAmount);
+
+  // Save the current state of the loan into the history array before updating
+  farmer.loan[loanIndex].history.push({
+    changedAt: new Date(),
+    loanDate: farmer.loan[loanIndex].loanDate,
+    loanAmount: farmer.loan[loanIndex].loanAmount,
+    operation: "deduct",
+  });
 
   await farmer.save();
 
@@ -177,6 +177,7 @@ const deleteLoan = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Loan not found");
   }
 
+  
   // Log the deletion in the history array
   farmer.loan[loanIndex].history.push({
     changedAt: new Date(),
