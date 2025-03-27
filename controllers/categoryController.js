@@ -4,7 +4,8 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Category } from "../model/Category.js";
 import { uploadOnCloudinary } from "../utils/CloudinaryUtility.js";
 import { SubAdmin } from "../model/SubAdmin.js";
-
+import mongoose from "mongoose";
+import { io } from "../server.js";
 // Add a new category
 export const addCategory = async (req, res) => {
   try {
@@ -35,6 +36,8 @@ export const addCategory = async (req, res) => {
     });
 
     await newCategory.save();
+    io.emit("categoryUpdated", { newCategory: newCategory});
+
     res
       .status(201)
       .json(
@@ -62,6 +65,7 @@ export const deleteCategory = async (req, res) => {
         .status(404)
         .json(new ApiResponse(404, null, "Category not found"));
     }
+    io.emit("categoryUpdated");
 
     res
       .status(200)
@@ -94,6 +98,7 @@ export const updateCategory = async (req, res) => {
         .status(404)
         .json(new ApiResponse(404, null, "Category not found"));
     }
+    io.emit("categoryUpdated", { updatedCategory: updatedCategory});
 
     res
       .status(200)
@@ -188,6 +193,8 @@ export const addProductToCategory = async (req, res) => {
 
     category.products.push(product); // Add product to the category's product list
     await category.save();
+    io.emit("categoryUpdated", {category});
+
 
     res
       .status(201)
@@ -221,6 +228,8 @@ export const deleteProductFromCategory = async (req, res) => {
       (product) => product._id.toString() !== productId
     );
     await category.save();
+    io.emit("categoryUpdated", { category});
+
 
     res
       .status(200)
@@ -284,6 +293,7 @@ export const updateProductInCategory = async (req, res) => {
 
     // Save the updated category
     await category.save();
+    io.emit("categoryUpdated", { category});
 
     return res
       .status(200)
@@ -300,7 +310,92 @@ export const updateProductInCategory = async (req, res) => {
 };
 
 // Controller to update the stock (quantity) of a product in a category based on operation and value
+// This is old implementation
+// export const updateProductStock = async (req, res) => {
+//   try {
+//     const { categoryId, productId } = req.params;
+//     const { operation, value } = req.body;
+
+//     // Validate input
+//     if (!operation || value === undefined) {
+//       return res
+//         .status(400)
+//         .json(
+//           new ApiResponse(
+//             400,
+//             null,
+//             "Both operation and value fields are required"
+//           )
+//         );
+//     }
+//     if (operation !== "add" && operation !== "subtract") {
+//       return res
+//         .status(400)
+//         .json(
+//           new ApiResponse(
+//             400,
+//             null,
+//             "Operation must be either 'add' or 'subtract'"
+//           )
+//         );
+//     }
+//     const numericValue = Number(value);
+//     if (isNaN(numericValue) || numericValue < 0) {
+//       return res
+//         .status(400)
+//         .json(new ApiResponse(400, null, "Value must be a positive number"));
+//     }
+
+//     // Find the category and then the embedded product
+//     const category = await Category.findById(categoryId);
+//     if (!category) {
+//       return res
+//         .status(404)
+//         .json(new ApiResponse(404, null, "Category not found"));
+//     }
+//     const product = category.products.id(productId);
+//     if (!product) {
+//       return res
+//         .status(404)
+//         .json(new ApiResponse(404, null, "Product not found in this category"));
+//     }
+
+//     // Update the quantity based on the operation
+//     if (operation === "add") {
+//       product.quantity += numericValue;
+//     } else if (operation === "subtract") {
+//       if (product.quantity < numericValue) {
+//         throw new ApiError(400, "Not enough stock");
+//       }
+//       product.quantity -= numericValue;
+//     }
+
+//     // The pre-save hook on the embedded schema will adjust productInstock accordingly
+//     await category.save();
+
+//     res
+//       .status(200)
+//       .json(
+//         new ApiResponse(200, product, "Product stock updated successfully")
+//       );
+//   } catch (error) {
+//     console.error("Error updating product stock:", error);
+//     if (error instanceof ApiError) {
+//       return res
+//         .status(error.status)
+//         .json(new ApiResponse(error.status, null, error.message));
+//     }
+//     res
+//       .status(500)
+//       .json(new ApiResponse(500, null, "Error updating product stock"));
+//   }
+// };
+
+//new Implementation
 export const updateProductStock = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const { categoryId, productId } = req.params;
     const { operation, value } = req.body;
@@ -360,7 +455,13 @@ export const updateProductStock = async (req, res) => {
     }
 
     // The pre-save hook on the embedded schema will adjust productInstock accordingly
-    await category.save();
+    // await category.save();
+    await category.save({ session }); 
+
+    io.emit("categoryUpdated", {product});
+
+    await session.commitTransaction();
+    session.endSession();
 
     res
       .status(200)
@@ -368,6 +469,8 @@ export const updateProductStock = async (req, res) => {
         new ApiResponse(200, product, "Product stock updated successfully")
       );
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
     console.error("Error updating product stock:", error);
     if (error instanceof ApiError) {
       return res
@@ -379,6 +482,7 @@ export const updateProductStock = async (req, res) => {
       .json(new ApiResponse(500, null, "Error updating product stock"));
   }
 };
+
 
 export const getAllProducts = asyncHandler(async (req, res) => {
   try {
