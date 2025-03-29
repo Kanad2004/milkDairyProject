@@ -1,12 +1,7 @@
 import mongoose, { mongo } from "mongoose"
 
-
-const orderSchema = new mongoose.Schema(
-  {
-    branch : {
-      type : Number ,
-      required : true , 
-    },  
+const productSchema = new mongoose.Schema(
+  { 
     productName: {
       type : String , 
       required : true ,
@@ -22,12 +17,30 @@ const orderSchema = new mongoose.Schema(
     quantity : {
         type : Number , 
         required : true , 
-    }
+    },
   } 
 )
+
 const onlineOrderSchema = new mongoose.Schema(
+
   {
-    orders: [orderSchema]
+    customerName : {
+      type : String , 
+      required : true , 
+    },
+    mobileNumber : {
+      type : String ,
+      required : true , 
+    },
+    address : {
+      type : String , 
+      required : true ,
+    },
+    branch : {
+      type : Number ,
+      required : true , 
+    }, 
+    products: [productSchema]
   },
   
   {

@@ -1,19 +1,34 @@
-import {onlineCustomerOrders} from "../model/onlineCustomer.js";
-
-// Get all orders
+import { onlineOrder } from "../model/OnlineOrder.js";
+import { SubAdmin } from "../model/SubAdmin.js";
+import {Branch} from "../model/Branch.js";
+// 📌 Get all orders
 export const getAllOrders = async (req, res) => {
     try {
-        const orders = await onlineCustomerOrders.find();
+        const subAdmin = await SubAdmin.findById(req.subAdmin._id);
+        const branch = await Branch.findById(subAdmin.branch);
+        console.log("branch: ", branch);
+
+        // Get today's start and end time
+        const today = new Date();
+        const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+
+        // Filter orders for the current day
+        const orders = await onlineOrder.find({
+            branch: branch.branchId,
+            createdAt: { $gte: startOfDay, $lte: endOfDay }
+        });
+
         res.status(200).json(orders);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-// Get a specific order by ID
+// 📌 Get a specific order by ID
 export const getOrderById = async (req, res) => {
     try {
-        const order = await onlineCustomerOrders.findById(req.params.id);
+        const order = await onlineOrder.findById(req.params.id);
         if (!order) {
             return res.status(404).json({ message: "Order not found" });
         }
@@ -23,11 +38,14 @@ export const getOrderById = async (req, res) => {
     }
 };
 
-// Create a new order
+// 📌 Create a new order
 export const createOrder = async (req, res) => {
+    const {orderData} = req.body ; 
+    console.log("orderData: " , orderData);
+    const {name , mobile, address , cartItems, branch} = orderData ; 
+
     try {
-        const { orders } = req.body; // Expecting an array of orders
-        const newOrder = new onlineCustomerOrders({ orders });
+        const newOrder = new onlineOrder({ customerName: name, mobileNumber:mobile, address, products:cartItems , branch : branch});
         await newOrder.save();
         res.status(201).json(newOrder);
     } catch (error) {
@@ -35,10 +53,10 @@ export const createOrder = async (req, res) => {
     }
 };
 
-// Update an order by ID
+// 📌 Update an order by ID
 export const updateOrder = async (req, res) => {
     try {
-        const updatedOrder = await onlineCustomerOrders.findByIdAndUpdate(
+        const updatedOrder = await onlineOrder.findByIdAndUpdate(
             req.params.id,
             req.body,
             { new: true }
@@ -52,10 +70,10 @@ export const updateOrder = async (req, res) => {
     }
 };
 
-// Delete an order by ID
+// 📌 Delete an order by ID
 export const deleteOrder = async (req, res) => {
     try {
-        const deletedOrder = await onlineCustomerOrders.findByIdAndDelete(req.params.id);
+        const deletedOrder = await onlineOrder.findByIdAndDelete(req.params.id);
         if (!deletedOrder) {
             return res.status(404).json({ message: "Order not found" });
         }

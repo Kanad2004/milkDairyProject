@@ -91,6 +91,7 @@ import categoryRouter from "./routes/categoryRouter.js";
 import loanRouter from "./routes/loanRouter.js";
 import transactionRouter from "./routes/transactionRouter.js";
 import onlineCustomerRouter from "./routes/onlinecustomerRouter.js";
+import onlineOrderRouter from "./routes/onlineOrderRouter.js";
 
 // ✅ Import required modules for Socket.io
 import { Server } from "socket.io";
@@ -131,6 +132,7 @@ app.use("/api/v1/category", categoryRouter);
 app.use("/api/v1/loan", loanRouter);
 app.use("/api/v1/transaction", transactionRouter);
 app.use("/api/v1/otp-verification", onlineCustomerRouter);
+app.use("/api/v1/online-order" , onlineOrderRouter);
 
 // ✅ Cloudinary Configuration
 cloudinary.config({
