@@ -52,9 +52,10 @@ transactionRouter.get(
   authorizeRoleSubAdmin(["subAdmin"]),
   getTransactionByMobileNumber
 );
+
 //subadmin
 transactionRouter.get(
-  "/subAdmin/customer-reports/:type",
+  "/subAdmin/customer-reports-by-type/:type",
   authenticateSubAdmin,
   authorizeRoleSubAdmin(["subAdmin"]),
   generateReport

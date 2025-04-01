@@ -248,6 +248,106 @@ const getDateRange = (type) => {
 };
 
 // Generate loan report for all farmers
+const generateLoanReportSubAdmin = asyncHandler(async (req, res) => {
+  try {
+    const { reportType } = req.query;
+    const type = reportType;
+    const { startDate, endDate } = getDateRange(type);
+
+    let query = {
+      loan: { $elemMatch: { loanDate: { $gte: startDate, $lte: endDate } } },
+    };
+
+    if (req.subAdmin) {
+      query.subAdmin = req.subAdmin._id;
+    }
+
+    const farmers = await Farmer.aggregate([
+      { $match: query },
+      {
+        $project: {
+          farmerName: 1,
+          mobileNumber: 1,
+          address: 1,
+          totalLoan: 1,
+          totalLoanPaidBack: 1,
+          totalLoanRemaining: 1,
+          loan: {
+            $filter: {
+              input: "$loan",
+              as: "loan",
+              cond: {
+                $and: [
+                  { $gte: ["$$loan.loanDate", startDate] },
+                  { $lte: ["$$loan.loanDate", endDate] },
+                ],
+              },
+            },
+          },
+        },
+      },
+    ]);
+
+    console.log("farmers: ", farmers);
+    if (!farmers || farmers.length === 0) {
+      console.log("No loans found in the given date range");
+      return res
+        .status(404)
+        .json({ success: false, message: "No loans found in the given date range" });
+    }
+
+    const workbook = new exceljs.Workbook();
+    const worksheet = workbook.addWorksheet("Loans");
+
+    worksheet.columns = [
+      { header: "Farmer ID", key: "farmerId", width: 20 },
+      { header: "Farmer Name", key: "farmerName", width: 20 },
+      { header: "Mobile Number", key: "mobileNumber", width: 20 },
+      { header: "Address", key: "address", width: 20 },
+      { header: "Total Loan", key: "totalLoan", width: 20 },
+      { header: "Total Loan Remaining", key: "totalLoanRemaining", width: 20 },
+      { header: "Loan ID", key: "loanId", width: 20 },
+      { header: "Loan Date", key: "loanDate", width: 20 },
+      { header: "Loan Amount", key: "loanAmount", width: 20 },
+    ];
+
+    farmers.forEach((farmer) => {
+      farmer.loan.forEach((loan) => {
+        worksheet.addRow({
+          farmerId: farmer._id,
+          farmerName: farmer.farmerName,
+          mobileNumber: farmer.mobileNumber,
+          address: farmer.address,
+          totalLoan: farmer.totalLoan,
+          totalLoanRemaining: farmer.totalLoanRemaining,
+          loanId: loan._id,
+          loanDate: loan.loanDate.toISOString().split("T")[0],
+          loanAmount: loan.loanAmount,
+        });
+      });
+    });
+
+    const filePath = path.join(process.cwd(), "public", "loans.xlsx");
+
+    await workbook.xlsx.writeFile(filePath);
+
+    return res.download(filePath, "loans.xlsx", (err) => {
+      if (err) {
+        console.error("Download Error:", err);
+        return res
+          .status(500)
+          .json({ success: false, message: "Error occurred while downloading the file", error: err.message });
+      }
+      setTimeout(() => fs.unlinkSync(filePath), 5000);
+    });
+
+  } catch (error) {
+    console.error("Error Generating Loan Report:", error);
+    return res.status(500).json({ success: false, message: "Internal Server Error", error: error.message });
+  }
+});
+
+
 const generateLoanReportAdmin = asyncHandler(async (req, res) => {
   const farmers = await Farmer.find({}).select(
     "loan farmerName mobileNumber address totalLoan totalLoanPaidBack totalLoanRemaining"
@@ -308,97 +408,98 @@ const generateLoanReportAdmin = asyncHandler(async (req, res) => {
 });
 
 // Generate loan report for all farmers
-const generateLoanReportSubAdmin = asyncHandler(async (req, res) => {
-  // const { startDate, endDate } = req.query;
+// const generateLoanReportSubAdmin = asyncHandler(async (req, res) => {
+//   // const { startDate, endDate } = req.query;
 
-  // const start = new Date(startDate);
-  // const end = new Date(endDate);
-  // end.setHours(23, 59, 59, 999);
-  const { reportType } = req.query;
-  const type = reportType;
-  const { startDate, endDate } = getDateRange(type);
+//   // const start = new Date(startDate);
+//   // const end = new Date(endDate);
+//   // end.setHours(23, 59, 59, 999);
+//   const { reportType } = req.query;
+//   const type = reportType;
+//   const { startDate, endDate } = getDateRange(type);
 
-  let query = {
-    loan: { $elemMatch: { loanDate: { $gte: startDate, $lte: endDate } } },
-  };
+//   let query = {
+//     loan: { $elemMatch: { loanDate: { $gte: startDate, $lte: endDate } } },
+//   };
 
-  if (req.subAdmin) {
-    query.subAdmin = req.subAdmin._id;
-  }
+//   if (req.subAdmin) {
+//     query.subAdmin = req.subAdmin._id;
+//   }
 
-  const farmers = await Farmer.aggregate([
-    { $match: query },
-    {
-      $project: {
-        farmerName: 1,
-        mobileNumber: 1,
-        address: 1,
-        totalLoan: 1,
-        totalLoanPaidBack: 1,
-        totalLoanRemaining: 1,
-        loan: {
-          $filter: {
-            input: "$loan",
-            as: "loan",
-            cond: {
-              $and: [
-                { $gte: ["$$loan.loanDate", startDate] },
-                { $lte: ["$$loan.loanDate", endDate] },
-              ],
-            },
-          },
-        },
-      },
-    },
-  ]);
+//   const farmers = await Farmer.aggregate([
+//     { $match: query },
+//     {
+//       $project: {
+//         farmerName: 1,
+//         mobileNumber: 1,
+//         address: 1,
+//         totalLoan: 1,
+//         totalLoanPaidBack: 1,
+//         totalLoanRemaining: 1,
+//         loan: {
+//           $filter: {
+//             input: "$loan",
+//             as: "loan",
+//             cond: {
+//               $and: [
+//                 { $gte: ["$$loan.loanDate", startDate] },
+//                 { $lte: ["$$loan.loanDate", endDate] },
+//               ],
+//             },
+//           },
+//         },
+//       },
+//     },
+//   ]);
 
-  console.log("farmers: ", farmers[0].loan);
-  if (!farmers || farmers.length === 0) {
-    throw new ApiError(404, "No loans found in the given date range");
-  }
+//   console.log("farmers: ", farmers);
+//   if (!farmers || farmers.length === 0) {
+//     // throw new ApiError(404, "No loans found in the given date range");
+//     return res.status(404).json({success : false , message : "No loans found in the given date range"})
+//   }
 
-  const workbook = new exceljs.Workbook();
-  const worksheet = workbook.addWorksheet("Loans");
+//   const workbook = new exceljs.Workbook();
+//   const worksheet = workbook.addWorksheet("Loans");
 
-  worksheet.columns = [
-    { header: "Farmer ID", key: "farmerId", width: 20 },
-    { header: "Farmer Name", key: "farmerName", width: 20 },
-    { header: "Mobile Number", key: "mobileNumber", width: 20 },
-    { header: "Address", key: "address", width: 20 },
-    { header: "Total Loan", key: "totalLoan", width: 20 },
-    { header: "Total Loan Remaining", key: "totalLoanRemaining", width: 20 },
-    { header: "Loan ID", key: "loanId", width: 20 },
-    { header: "Loan Date", key: "loanDate", width: 20 },
-    { header: "Loan Amount", key: "loanAmount", width: 20 },
-  ];
+//   worksheet.columns = [
+//     { header: "Farmer ID", key: "farmerId", width: 20 },
+//     { header: "Farmer Name", key: "farmerName", width: 20 },
+//     { header: "Mobile Number", key: "mobileNumber", width: 20 },
+//     { header: "Address", key: "address", width: 20 },
+//     { header: "Total Loan", key: "totalLoan", width: 20 },
+//     { header: "Total Loan Remaining", key: "totalLoanRemaining", width: 20 },
+//     { header: "Loan ID", key: "loanId", width: 20 },
+//     { header: "Loan Date", key: "loanDate", width: 20 },
+//     { header: "Loan Amount", key: "loanAmount", width: 20 },
+//   ];
 
-  farmers.forEach((farmer) => {
-    farmer.loan.forEach((loan) => {
-      worksheet.addRow({
-        farmerId: farmer._id,
-        farmerName: farmer.farmerName,
-        mobileNumber: farmer.mobileNumber,
-        address: farmer.address,
-        totalLoan: farmer.totalLoan,
-        totalLoanRemaining: farmer.totalLoanRemaining,
-        loanId: loan._id,
-        loanDate: loan.loanDate.toISOString().split("T")[0],
-        loanAmount: loan.loanAmount,
-      });
-    });
-  });
+//   farmers.forEach((farmer) => {
+//     farmer.loan.forEach((loan) => {
+//       worksheet.addRow({
+//         farmerId: farmer._id,
+//         farmerName: farmer.farmerName,
+//         mobileNumber: farmer.mobileNumber,
+//         address: farmer.address,
+//         totalLoan: farmer.totalLoan,
+//         totalLoanRemaining: farmer.totalLoanRemaining,
+//         loanId: loan._id,
+//         loanDate: loan.loanDate.toISOString().split("T")[0],
+//         loanAmount: loan.loanAmount,
+//       });
+//     });
+//   });
 
-  const filePath = path.join(process.cwd(), "public", "loans.xlsx");
+//   const filePath = path.join(process.cwd(), "public", "loans.xlsx");
 
-  await workbook.xlsx.writeFile(filePath);
+//   await workbook.xlsx.writeFile(filePath);
 
-  return res.download(filePath, "loans.xlsx", (err) => {
-    if (err) {
-      throw new ApiError(500, "Error occurred while downloading the file");
-    }
-    setTimeout(() => fs.unlinkSync(filePath), 5000);
-  });
-});
+//   return res.download(filePath, "loans.xlsx", (err) => {
+//     if (err) {
+//       return res.status(500).json({success : false , message : "Error occurred while downloading the file"})
+//     }
+//     setTimeout(() => fs.unlinkSync(filePath), 5000);
+//   });
+// });
 
 // Generate loan report by farmer ID
 const generateLoanReportByMobileNumber = asyncHandler(async (req, res) => {

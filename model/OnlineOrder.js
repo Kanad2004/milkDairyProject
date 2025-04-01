@@ -40,7 +40,8 @@ const onlineOrderSchema = new mongoose.Schema(
       type : Number ,
       required : true , 
     }, 
-    products: [productSchema]
+    products: [productSchema],
+
   },
   
   {

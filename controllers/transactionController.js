@@ -209,6 +209,80 @@ const getDateRange = (type) => {
 // Generate Report Function
 //This is for the SubAdmin Only . . . 
 //This function is working correctly but I want now what fields should be included in it . . .
+// export const generateReport = async (req, res) => {
+//   try {
+//     const { reportType } = req.query;
+//     const type = reportType;
+//     const { startDate, endDate } = getDateRange(type);
+
+//     // Create query filter
+//     const query = {
+//       time: { $gte: startDate, $lte: endDate },
+//     };
+
+//     if (req.subAdmin) {
+//       query.subAdmin = req.subAdmin._id;
+//     }
+
+//     // Ensure subAdmin and admin fields are populated
+//     const transactions = await Transaction.find(query)
+//       .populate("items.product");
+
+//     if (!transactions.length) {
+//       return res.status(404).json({ message: "No transactions found" });
+//     }
+    
+//     // Ensure branch is retrieved properly
+//     const branch = req.subAdmin ? await Branch.findById(req.subAdmin.branch) : null;
+    
+//     // Prepare data for Excel
+//     const reportData = transactions.map((transaction) => ({
+//       TransactionID: transaction._id ? transaction._id.toString() : "N/A",
+//       CustomerName: transaction.customerName ? transaction.customerName : "N/A",
+//       CustomerMobileNumber: transaction.mobileNumber ? transaction.mobileNumber : "N/A",
+//       Amount: transaction.amount || "N/A",
+//       TransactionDate: transaction.time
+//         ? transaction.time.toISOString().replace("T", " ").slice(0, 19)
+//         : "N/A", 
+//       AdminID: transaction.admin ? transaction.admin._id.toString() : "N/A",
+//       SubAdminID: transaction.subAdmin ? transaction.subAdmin._id.toString() : "N/A",
+//       BranchID: branch ? branch.branchId : "N/A",
+//       Items: transaction.items.length
+//         ? transaction.items
+//             .map((item) => `Product: ${item.product}, Quantity: ${item.quantity}`)
+//             .join("; ")
+//         : "N/A",
+//     }));
+
+//     // Create Excel file
+//     const workbook = XLSX.utils.book_new();
+//     const worksheet = XLSX.utils.json_to_sheet(reportData);
+//     XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
+
+//     // Define file path
+//     const filePath = `./reports/${type}_transactions_${
+//       branch ? `branch_${branch.branchName}_` : ""
+//     }${Date.now()}.xlsx`;
+
+//     // Write to file
+//     XLSX.writeFile(workbook, filePath);
+
+//     // Send file as response
+//     res.download(filePath, (err) => {
+//       if (err) {
+//         console.error("Error sending file:", err);
+//         return res.status(500).json({ message: "Error downloading file" });
+//       }
+//       fs.unlink(filePath, (err) => {
+//         if (err) console.error("Error deleting file:", err);
+//       });
+//     });
+//   } catch (error) {
+//     console.error("Error generating report:", error);
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
 export const generateReport = async (req, res) => {
   try {
     const { reportType } = req.query;
@@ -226,30 +300,30 @@ export const generateReport = async (req, res) => {
 
     // Ensure subAdmin and admin fields are populated
     const transactions = await Transaction.find(query)
-      .populate("items.product");
+      .populate("subAdmin");
 
     if (!transactions.length) {
-      return res.status(404).json({ message: "No transactions found" });
+      return res.status(404).json({ success: false , message: "No transactions found" });
     }
-    
+
     // Ensure branch is retrieved properly
     const branch = req.subAdmin ? await Branch.findById(req.subAdmin.branch) : null;
     
     // Prepare data for Excel
     const reportData = transactions.map((transaction) => ({
       TransactionID: transaction._id ? transaction._id.toString() : "N/A",
-      CustomerName: transaction.customerName ? transaction.customerName : "N/A",
-      CustomerMobileNumber: transaction.mobileNumber ? transaction.mobileNumber : "N/A",
+      CustomerMobileNumber: transaction.mobileNumber || "N/A",
+      customerName:transaction.customerName || "N/A",
       Amount: transaction.amount || "N/A",
       TransactionDate: transaction.time
         ? transaction.time.toISOString().replace("T", " ").slice(0, 19)
         : "N/A", 
       AdminID: transaction.admin ? transaction.admin._id.toString() : "N/A",
-      SubAdminID: transaction.subAdmin ? transaction.subAdmin._id.toString() : "N/A",
+      SubAdmin: transaction.subAdmin ? transaction.subAdmin.subAdminName.toString() : "N/A",
       BranchID: branch ? branch.branchId : "N/A",
       Items: transaction.items.length
         ? transaction.items
-            .map((item) => `Product: ${item.product}, Quantity: ${item.quantity}`)
+            .map((item) => `Product: ${item.productName}, Quantity: ${item.quantity}`)
             .join("; ")
         : "N/A",
     }));
@@ -271,7 +345,7 @@ export const generateReport = async (req, res) => {
     res.download(filePath, (err) => {
       if (err) {
         console.error("Error sending file:", err);
-        return res.status(500).json({ message: "Error downloading file" });
+        return res.status(500).json({ success: false , message: "Error downloading file" });
       }
       fs.unlink(filePath, (err) => {
         if (err) console.error("Error deleting file:", err);
@@ -279,13 +353,15 @@ export const generateReport = async (req, res) => {
     });
   } catch (error) {
     console.error("Error generating report:", error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({success: false, message: error.message });
   }
 };
 
 export const getTransactionByMobileNumber= asyncHandler(async (req, res) => {
   try{
+  // console.log("are you coming in this")
   const { mobileNumber } = req.params;
+
   const transaction = await Transaction.findOne({ mobileNumber });
   if (!transaction) {
     throw new ApiError(404, "Transaction not found");
