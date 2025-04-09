@@ -5,6 +5,8 @@ import {
   exportFarmerDetail,
   getAllfarmers,
   updateFarmer,
+  farmerCombinedReport,
+  allFarmersCombinedReport
 } from "../controllers/farmerController.js";
 
 const farmerRouter = express.Router();
@@ -49,5 +51,19 @@ farmerRouter.patch(
   authorizeRoleSubAdmin(["subAdmin"]),
   updateFarmer
 );
+
+farmerRouter.get(
+  "/combined-report-by-mobileNumber/:mobileNumber" ,
+  authenticateSubAdmin,
+  authorizeRoleSubAdmin(["subAdmin"]),
+  farmerCombinedReport
+)
+
+farmerRouter.get(
+  "/combined-report-for-all-farmers" ,
+  authenticateSubAdmin,
+  authorizeRoleSubAdmin(["subAdmin"]),
+  allFarmersCombinedReport
+)
 
 export default farmerRouter;
