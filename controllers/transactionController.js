@@ -577,3 +577,102 @@ export const generateReportAdmin = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
+
+// combined report  for farmer all in one transaction and loan of a farmer 
+
+// import mongoose from "mongoose";
+import { Farmer } from "../model/Farmer.js"; // your schema
+import ExcelJS from "exceljs";
+import PDFDocument from "pdfkit";
+// import fs from "fs";
+
+ export async function generateFarmerReport(mobileNumber) {
+  const farmer = await Farmer.findOne({ mobileNumber });
+    console.log(farmer);
+  if (!farmer) throw new Error("Farmer not found");
+
+  const fileNameBase = `farmer-report-${farmer.farmerName.replace(" ", "_")}`;
+
+  // ----------------- EXCEL -----------------
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("Farmer Report");
+
+  // Milk Transactions
+  sheet.addRow(["Milk Transactions"]);
+  sheet.addRow([
+    "Date", "Time", "Amount", "Milk Type", "Quantity", "SNF", "FAT", "Price/Litre"
+  ]);
+  farmer.transaction.forEach(t => {
+    sheet.addRow([
+      t.transactionDate.toISOString().split('T')[0],
+      t.transactionTime,
+      t.transactionAmount,
+      t.milkType,
+      t.milkQuantity,
+      t.snf,
+      t.fat,
+      t.pricePerLitre,
+    ]);
+  });
+
+  sheet.addRow([]);
+  sheet.addRow(["Loan Details"]);
+  sheet.addRow(["Loan Date", "Original Amount", "Remaining Loan", "Is Deleted", "History"]);
+
+  // Loans
+  farmer.loan.forEach(loan => {
+    const historyStr = loan.history.map(h =>
+      `(${h.operation} - ₹${h.loanAmount} on ${h.changedAt.toISOString().split('T')[0]})`
+    ).join("; ");
+    
+    sheet.addRow([
+      loan.loanDate.toISOString().split('T')[0],
+      loan.originalAmount,
+      loan.loanAmount,
+      loan.isDeleted ? "Yes" : "No",
+      historyStr
+    ]);
+  });
+
+  const excelPath = `./${fileNameBase}.xlsx`;
+  await workbook.xlsx.writeFile(excelPath);
+  console.log(`Excel report saved to ${excelPath}`);
+
+  // // ----------------- PDF -----------------
+  // const pdfPath = `./${fileNameBase}.pdf`;
+  // const doc = new PDFDocument();
+  // doc.pipe(fs.createWriteStream(pdfPath));
+
+  // doc.fontSize(18).text("Farmer Report", { align: "center" });
+  // doc.moveDown();
+  // doc.fontSize(12).text(`Farmer Name: ${farmer.farmerName}`);
+  // doc.text(`Mobile: ${farmer.mobileNumber}`);
+  // doc.text(`Address: ${farmer.address}`);
+  // doc.text(`Milk Type: ${farmer.milkType}`);
+  // doc.text(`Joining Date: ${farmer.joiningDate.toISOString().split('T')[0]}`);
+  // doc.moveDown();
+
+  // doc.fontSize(14).text("Milk Transactions:");
+  // farmer.transaction.forEach((t, i) => {
+  //   doc.text(
+  //     `${i + 1}. Date: ${t.transactionDate.toISOString().split('T')[0]}, Time: ${t.transactionTime}, Amount: ₹${t.transactionAmount}, Milk: ${t.milkType}, Qty: ${t.milkQuantity}, SNF: ${t.snf}, FAT: ${t.fat}, Rate: ₹${t.pricePerLitre}/L`
+  //   );
+  // });
+
+  // doc.moveDown();
+  // doc.fontSize(14).text("Loan Details:");
+  // farmer.loan.forEach((loan, i) => {
+  //   doc.text(
+  //     `${i + 1}. Loan Date: ${loan.loanDate.toISOString().split('T')[0]}, Original: ₹${loan.originalAmount}, Remaining: ₹${loan.loanAmount}, Deleted: ${loan.isDeleted ? "Yes" : "No"}`
+  //   );
+  //   loan.history.forEach((h, j) => {
+  //     doc.text(`   - ${j + 1}. ${h.operation.toUpperCase()} ₹${h.loanAmount} on ${h.changedAt.toISOString().split('T')[0]}`);
+  //   });
+  // });
+  
+  // doc.end();
+
+  return { excelPath};
+}

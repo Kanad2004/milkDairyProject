@@ -31,7 +31,7 @@ const farmerSchema = new mongoose.Schema(
     farmerName: { type: String, required: true },
     mobileNumber: { type: String, required: true},
     address: { type: String, required: true },
-    milkType: { type: String, required: true },
+    // milkType: { type: String, required: true },
     gender: { type: String, required: true },
     joiningDate: { type: Date, required: true },
     subAdmin: { type: mongoose.Schema.Types.ObjectId, ref: "SubAdmin" },
