@@ -11,7 +11,7 @@ import {
   generateFarmerReport
 } from "../controllers/transactionController.js";
 
-import { farmerTransaction } from "../controllers/farmerTrasactionController.js";
+import { farmerTransaction, downloadAllFarmersPDF } from "../controllers/farmerTrasactionController.js";
 
 import {
   authenticateAdmin,
@@ -127,6 +127,11 @@ transactionRouter.get(
   "/download-pdf/:mobileNumber",
 
   farmerTransaction
+);
+
+transactionRouter.get(
+  "/download-all-farmers-pdf",
+  downloadAllFarmersPDF
 );
 
 
