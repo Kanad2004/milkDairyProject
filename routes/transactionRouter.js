@@ -10,12 +10,18 @@ import {
   generateReportAdmin,
   generateFarmerReport
 } from "../controllers/transactionController.js";
+
+import { farmerTransaction } from "../controllers/farmerTrasactionController.js";
+
 import {
   authenticateAdmin,
   authenticateSubAdmin,
   authorizeRoleAdmin,
   authorizeRoleSubAdmin,
 } from "../middlewares/auth.js";
+
+
+
 
 const transactionRouter = express.Router();
 
@@ -116,6 +122,12 @@ transactionRouter.get("/download-report/:mobile",  async (req, res) => {
 //   }
 // });
 
+
+transactionRouter.get(
+  "/download-pdf/:mobileNumber",
+
+  farmerTransaction
+);
 
 
 export default transactionRouter;
