@@ -44,10 +44,21 @@ const subAdminLogin = asyncHandler(async (req, res) => {
     subAdmin.refreshToken = refreshToken;
     await subAdmin.save({ validateBeforeSave: false });
 
+
+    //Following is the development setup
+    // const cookieOptions = {
+    //   httpOnly: true,
+    //   secure: true,
+    //   sameSite: "Strict",
+    // };
+
+    //Following is the production setup
+    const isProduction = process.env.NODE_ENV === "production";
+
     const cookieOptions = {
       httpOnly: true,
-      secure: true,
-      sameSite: "Strict",
+      secure: isProduction,
+      sameSite: isProduction ? "None" : "Lax",
     };
 
     return res
@@ -79,11 +90,20 @@ const subAdminLogout = asyncHandler(async (req, res) => {
 
   await SubAdmin.findByIdAndUpdate(subAdmin._id, { refreshToken: null });
 
-  const cookieOptions = {
-    httpOnly: true,
-    secure: true,
-    sameSite: "Strict",
-  };
+  //development setup
+  // const cookieOptions = {
+  //   httpOnly: true,
+  //   secure: true,
+  //   sameSite: "Strict",
+  // };
+
+    const isProduction = process.env.NODE_ENV === "production";
+
+      const cookieOptions = {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? "None" : "Lax",
+      };
 
   return res
     .status(200)
