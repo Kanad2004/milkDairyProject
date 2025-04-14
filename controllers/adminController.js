@@ -91,7 +91,7 @@ const logoutAdmin = asyncHandler(async (req, res) => {
   // };
   const isProduction = process.env.NODE_ENV === "production";
 
-  const cookieOptions = {
+  const options = {
     httpOnly: true,
     secure: isProduction,
     sameSite: isProduction ? "None" : "Lax",
