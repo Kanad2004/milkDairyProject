@@ -8,6 +8,7 @@ import ExcelJS from "exceljs";
 import fs from "fs";
 import path from "path";
 import { Branch } from "../model/Branch.js";
+import moment from "moment"
 
 // Add Milk Transaction
 const addMilk = asyncHandler(async (req, res) => {
@@ -60,11 +61,11 @@ const addMilk = asyncHandler(async (req, res) => {
         operation: "delete",
       });
     } else {
-  
-      farmer.totalLoanRemaining = farmer.totalLoanRemaining - transactionAmount;
+      
+      farmer.totalLoanRemaining = farmer.totalLoanRemaining - Number(transactionAmount);
       farmer.loan[loanIndex].loanAmount =
-      farmer.loan[loanIndex].loanAmount - transactionAmount;
-      farmer.totalLoanPaidBack += transactionAmount;
+      farmer.loan[loanIndex].loanAmount - Number(transactionAmount);
+      farmer.totalLoanPaidBack += Number(transactionAmount) ;
 
         farmer.loan[loanIndex].history.push({
           changedAt: new Date(),
@@ -74,9 +75,10 @@ const addMilk = asyncHandler(async (req, res) => {
         });
     }
   }
+  let tmptransactionAmount = Number(transactionAmount);
   farmer.transaction.push({
     transactionDate,
-    transactionAmount,
+    transactionAmount : tmptransactionAmount,
     milkQuantity,
     milkType,
     snf: snfPercentage,
@@ -95,20 +97,29 @@ const addMilk = asyncHandler(async (req, res) => {
     .send(new ApiResponse(200, farmerWithSubAdmin, "Milk added successfully"));
 });
 
-// Get All Milk Transactions (Grouped by Farmer)
+
+// Get All Milk Transactions (Grouped by Farmer) Updated this for getting the transacitons of today only asks to peer  . . . 
 const getAllMilk = asyncHandler(async (req, res) => {
   const farmers = await Farmer.find({ subAdmin: req.subAdmin._id });
   if (!farmers || farmers.length === 0) {
     throw new ApiError(404, "No farmers found");
   }
+  const startOfDay = moment().startOf("day").toDate();
+  const endOfDay = moment().endOf("day").toDate();
+
   let allMilk = [];
   farmers.forEach((farmer) => {
+    const tmpTransactions = farmer.transaction.filter((tx) => {
+      const txDate = new Date(tx.transactionDate);
+      return txDate >= startOfDay && txDate <= endOfDay;
+    });
+
     // Include mobileNumber as farmerNumber so frontend can flatten the data properly
     let milk = {
       farmerName: farmer.farmerName,
       farmerId: farmer.farmerId ,
       mobileNumber: farmer.mobileNumber,
-      transaction: farmer.transaction,
+      transaction: farmer.transaction ,
     };
     allMilk.push(milk);
   });
