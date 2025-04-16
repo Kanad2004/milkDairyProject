@@ -135,4 +135,11 @@ transactionRouter.get(
 );
 
 
+transactionRouter.get(
+  "/ReportByFarmerId/:farmerId/:day",
+  // authenticateAdmin,
+  // authorizeRoleAdmin(["Admin"]),
+  downloadReportByFarmerId
+);
+
 export default transactionRouter;
