@@ -42,10 +42,10 @@ export const getOrderById = async (req, res) => {
 export const createOrder = async (req, res) => {
     const {orderData} = req.body ; 
     console.log("orderData: " , orderData);
-    const {name , mobile, address , cartItems, branch} = orderData ; 
+    const {name , mobile, address , cartItems, branch, isOrderPlaced} = orderData ; 
 
     try {
-        const newOrder = new onlineOrder({ customerName: name, mobileNumber:mobile, address, products:cartItems , branch : branch});
+        const newOrder = new onlineOrder({ customerName: name, mobileNumber:mobile, address, products:cartItems , branch : branch, isOrderPlaced});
         await newOrder.save();
         res.status(201).json(newOrder);
     } catch (error) {
@@ -82,3 +82,22 @@ export const deleteOrder = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+export const placeOrder = async (req,res) => {
+    try{
+        const updatedOrder = await onlineOrder.findByIdAndUpdate(
+            req.params.id,
+            {isPlaced : true},
+            { new: true }
+        );
+        if (!updatedOrder) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+        res.status(200).json(updatedOrder);
+
+    }
+    catch(err)
+    {
+        res.status(500).json({message : error.message})
+    }
+}
