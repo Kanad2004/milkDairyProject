@@ -493,8 +493,6 @@ doc.font('Helvetica').text('Loan Remaining:', 300, currentY)
   }
 }; 
 
-
-
 // import express from 'express';
 // import PDFDocument from 'pdfkit';
 // import { Farmer } from '../model/Farmer.js';
@@ -812,8 +810,6 @@ export const downloadAllFarmersPDF = async (req, res) => {
     res.status(500).json({ message: 'Error generating PDF' });
   }
 };
-
-
 
 export const downloadReportByFarmerId = async (req, res) => {
   try {
