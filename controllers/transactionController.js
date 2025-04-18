@@ -206,83 +206,6 @@ const getDateRange = (type) => {
 };
 
 
-// Generate Report Function
-//This is for the SubAdmin Only . . . 
-//This function is working correctly but I want now what fields should be included in it . . .
-// export const generateReport = async (req, res) => {
-//   try {
-//     const { reportType } = req.query;
-//     const type = reportType;
-//     const { startDate, endDate } = getDateRange(type);
-
-//     // Create query filter
-//     const query = {
-//       time: { $gte: startDate, $lte: endDate },
-//     };
-
-//     if (req.subAdmin) {
-//       query.subAdmin = req.subAdmin._id;
-//     }
-
-//     // Ensure subAdmin and admin fields are populated
-//     const transactions = await Transaction.find(query)
-//       .populate("items.product");
-
-//     if (!transactions.length) {
-//       return res.status(404).json({ message: "No transactions found" });
-//     }
-    
-//     // Ensure branch is retrieved properly
-//     const branch = req.subAdmin ? await Branch.findById(req.subAdmin.branch) : null;
-    
-//     // Prepare data for Excel
-//     const reportData = transactions.map((transaction) => ({
-//       TransactionID: transaction._id ? transaction._id.toString() : "N/A",
-//       CustomerName: transaction.customerName ? transaction.customerName : "N/A",
-//       CustomerMobileNumber: transaction.mobileNumber ? transaction.mobileNumber : "N/A",
-//       Amount: transaction.amount || "N/A",
-//       TransactionDate: transaction.time
-//         ? transaction.time.toISOString().replace("T", " ").slice(0, 19)
-//         : "N/A", 
-//       AdminID: transaction.admin ? transaction.admin._id.toString() : "N/A",
-//       SubAdminID: transaction.subAdmin ? transaction.subAdmin._id.toString() : "N/A",
-//       BranchID: branch ? branch.branchId : "N/A",
-//       Items: transaction.items.length
-//         ? transaction.items
-//             .map((item) => `Product: ${item.product}, Quantity: ${item.quantity}`)
-//             .join("; ")
-//         : "N/A",
-//     }));
-
-//     // Create Excel file
-//     const workbook = XLSX.utils.book_new();
-//     const worksheet = XLSX.utils.json_to_sheet(reportData);
-//     XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
-
-//     // Define file path
-//     const filePath = `./reports/${type}_transactions_${
-//       branch ? `branch_${branch.branchName}_` : ""
-//     }${Date.now()}.xlsx`;
-
-//     // Write to file
-//     XLSX.writeFile(workbook, filePath);
-
-//     // Send file as response
-//     res.download(filePath, (err) => {
-//       if (err) {
-//         console.error("Error sending file:", err);
-//         return res.status(500).json({ message: "Error downloading file" });
-//       }
-//       fs.unlink(filePath, (err) => {
-//         if (err) console.error("Error deleting file:", err);
-//       });
-//     });
-//   } catch (error) {
-//     console.error("Error generating report:", error);
-//     res.status(500).json({ message: error.message });
-//   }
-// };
-
 export const generateReport = async (req, res) => {
   try {
     const { reportType } = req.query;
@@ -356,6 +279,123 @@ export const generateReport = async (req, res) => {
     res.status(500).json({success: false, message: error.message });
   }
 };
+import PDFDocument from 'pdfkit';
+
+
+export const generateCustomerTransactionReport = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.params;
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({ success: false, message: "Start date and end date are required" });
+    }
+
+    // Parse start and end dates
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    // Create query filter for transactions within date range
+    const query = {
+      time: { $gte: start, $lte: end },
+    };
+
+    if (req.subAdmin) {
+      query.subAdmin = req.subAdmin._id;
+    }
+
+    // Fetch transactions and branch details
+    const transactions = await Transaction.find(query).populate('subAdmin');
+    const branch = req.subAdmin ? await Branch.findById(req.subAdmin.branch) : null;
+
+    if (!transactions.length) {
+      return res.status(404).json({ success: false, message: "No transactions found" });
+    }
+
+    // Create a PDF document
+    const doc = new PDFDocument({ size: 'A4', margins: { top: 50, bottom: 50, left: 50, right: 50 } });
+    const filePath = path.join('reports', `Transaction_Report_${Date.now()}.pdf`);
+    doc.pipe(fs.createWriteStream(filePath));
+
+    // Header
+    doc.rect(50, 40, 495, 70).fillAndStroke('#F0F8FF', '#003366');
+    doc.fontSize(22).fillColor('#003366').text('TRANSACTION REPORT', 50, 55, { align: 'center' });
+    doc.fontSize(10).fillColor('#003366').text(`Date Range: ${startDate} to ${endDate}`, 50, 85, { align: 'center' });
+
+    // Branch and SubAdmin Details
+    if (branch) {
+      doc.moveDown(2);
+      doc.fontSize(16).fillColor('#003366').text('BRANCH DETAILS', { underline: true });
+      doc.fontSize(10).fillColor('black');
+      doc.text(`Branch Name: ${branch.branchName}`);
+      doc.text(`Branch ID: ${branch.branchId}`);
+      doc.text(`Location: ${branch.location}`);
+    }
+
+    // Table Header
+    doc.moveDown(4);
+    doc.fontSize(14).fillColor('#003366').text('TRANSACTION DETAILS', { underline: true });
+    doc.moveDown();
+
+    const drawTable = (transactions, startY) => {
+      doc.rect(50, startY, 495, 20).fillAndStroke('#003366', '#003366');
+      doc.fillColor('#FFFFFF').fontSize(10);
+      doc.text('Date', 55, startY + 6);
+      doc.text('Customer Name', 130, startY + 6);
+      doc.text('Amount (₹)', 230, startY + 6);
+      doc.text('Items', 320, startY + 6);
+      doc.text('Admin ID', 420, startY + 6);
+
+      startY += 20;
+
+      transactions.forEach((transaction, i) => {
+        if (i % 2 === 0) doc.rect(50, startY, 495, 20).fillAndStroke('#F8F9FA', '#CCE5FF');
+        else doc.rect(50, startY, 495, 20).fillAndStroke('#FFFFFF', '#CCE5FF');
+
+        doc.fillColor('black').fontSize(9);
+        doc.text(new Date(transaction.time).toLocaleDateString(), 55, startY + 6);
+        doc.text(transaction.customerName || 'N/A', 130, startY + 6);
+        doc.text(transaction.amount.toFixed(2), 230, startY + 6);
+        doc.text(transaction.items.length ? transaction.items.map(item => `${item.productName}: ${item.quantity}`).join("; ") : 'N/A', 320, startY + 6);
+        doc.text(transaction.admin ? transaction.admin._id.toString() : 'N/A', 420, startY + 6);
+
+        startY += 20;
+      });
+
+      return startY;
+    };
+
+    let tableStartY = doc.y;
+    tableStartY = drawTable(transactions, tableStartY);
+
+    // Footer with page count
+    const pageCount = doc.bufferedPageRange().count;
+    for (let i = 0; i < pageCount; i++) {
+      doc.switchToPage(i);
+      doc.moveTo(50, 780).lineTo(545, 780).stroke('#003366');
+      doc.fontSize(8).fillColor('#666666')
+        .text(`Transaction Management System - Report generated on ${new Date().toLocaleString()}`, 50, 790)
+        .text(`Page ${i + 1} of ${pageCount}`, 450, 790);
+    }
+
+    doc.end();
+
+    // Send the PDF file as a response
+    res.download(filePath, (err) => {
+      if (err) {
+        console.error("Error sending file:", err);
+        return res.status(500).json({ success: false, message: "Error downloading file" });
+      }
+
+      fs.unlink(filePath, (err) => {
+        if (err) console.error("Error deleting file:", err);
+      });
+    });
+  } catch (error) {
+    console.error("Error generating report:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 
 export const getTransactionByMobileNumber= asyncHandler(async (req, res) => {
   try{
@@ -578,14 +618,10 @@ export const generateReportAdmin = async (req, res) => {
   }
 };
 
-
-
-// combined report  for farmer all in one transaction and loan of a farmer 
-
 // import mongoose from "mongoose";
 import { Farmer } from "../model/Farmer.js"; // your schema
 import ExcelJS from "exceljs";
-import PDFDocument from "pdfkit";
+// import PDFDocument from "pdfkit";
 // import fs from "fs";
 
  export async function generateFarmerReport(mobileNumber) {
@@ -640,39 +676,6 @@ import PDFDocument from "pdfkit";
   await workbook.xlsx.writeFile(excelPath);
   console.log(`Excel report saved to ${excelPath}`);
 
-  // // ----------------- PDF -----------------
-  // const pdfPath = `./${fileNameBase}.pdf`;
-  // const doc = new PDFDocument();
-  // doc.pipe(fs.createWriteStream(pdfPath));
-
-  // doc.fontSize(18).text("Farmer Report", { align: "center" });
-  // doc.moveDown();
-  // doc.fontSize(12).text(`Farmer Name: ${farmer.farmerName}`);
-  // doc.text(`Mobile: ${farmer.mobileNumber}`);
-  // doc.text(`Address: ${farmer.address}`);
-  // doc.text(`Milk Type: ${farmer.milkType}`);
-  // doc.text(`Joining Date: ${farmer.joiningDate.toISOString().split('T')[0]}`);
-  // doc.moveDown();
-
-  // doc.fontSize(14).text("Milk Transactions:");
-  // farmer.transaction.forEach((t, i) => {
-  //   doc.text(
-  //     `${i + 1}. Date: ${t.transactionDate.toISOString().split('T')[0]}, Time: ${t.transactionTime}, Amount: ₹${t.transactionAmount}, Milk: ${t.milkType}, Qty: ${t.milkQuantity}, SNF: ${t.snf}, FAT: ${t.fat}, Rate: ₹${t.pricePerLitre}/L`
-  //   );
-  // });
-
-  // doc.moveDown();
-  // doc.fontSize(14).text("Loan Details:");
-  // farmer.loan.forEach((loan, i) => {
-  //   doc.text(
-  //     `${i + 1}. Loan Date: ${loan.loanDate.toISOString().split('T')[0]}, Original: ₹${loan.originalAmount}, Remaining: ₹${loan.loanAmount}, Deleted: ${loan.isDeleted ? "Yes" : "No"}`
-  //   );
-  //   loan.history.forEach((h, j) => {
-  //     doc.text(`   - ${j + 1}. ${h.operation.toUpperCase()} ₹${h.loanAmount} on ${h.changedAt.toISOString().split('T')[0]}`);
-  //   });
-  // });
-  
-  // doc.end();
 
   return { excelPath};
 }

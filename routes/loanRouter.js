@@ -14,7 +14,8 @@ import {
   updateLoan,
   generateLoanReportAdmin,
   generateLoanReportSubAdmin,
-  generateLoanReportByMobileNumber
+  // generateLoanReportByMobileNumber 
+  generateLoanPDFByFarmerIdWithDateRange
 } from "../controllers/loanController.js";
 
 const loanRouter = express.Router();
@@ -59,13 +60,13 @@ loanRouter.post(
 // Route to generate loan report for all farmers
 loanRouter.get("/admin/loans/report",authenticateAdmin, authorizeRoleAdmin(['Admin']), generateLoanReportAdmin);
 // Route to generate loan report by farmer mobile number
-loanRouter.get("/adimin/loans/report/:mobileNumber",authenticateAdmin, authorizeRoleAdmin(['Admin']), generateLoanReportByMobileNumber);
+// loanRouter.get("/adimin/loans/report/:mobileNumber",authenticateAdmin, authorizeRoleAdmin(['Admin']), generateLoanReportByMobileNumber);
 
 
 // Route to generate loan report for all farmers
-loanRouter.get("/subAdmin/loans/report",authenticateSubAdmin, authorizeRoleSubAdmin(['subAdmin']), generateLoanReportSubAdmin);
+loanRouter.get("/subAdmin/loans/report/:start/:end",authenticateSubAdmin, authorizeRoleSubAdmin(['subAdmin']), generateLoanReportSubAdmin);
 
-// Route to generate loan report by farmer mobile number
-loanRouter.get("/subAdmin/loans/report/:farmerId",authenticateSubAdmin, authorizeRoleSubAdmin(['subAdmin']), generateLoanReportByMobileNumber);
+// Route to generate loan report by farmer ID
+loanRouter.get("/subAdmin/loans/report/:farmerId/:start/:end",authenticateSubAdmin, authorizeRoleSubAdmin(['subAdmin']), generateLoanPDFByFarmerIdWithDateRange);
 
 export default loanRouter;
