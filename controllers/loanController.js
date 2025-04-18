@@ -250,6 +250,7 @@ const getDateRange = (type) => {
 // Generate loan report for all farmers
 import PDFDocument from 'pdfkit';
 
+//This has to be checked . . . 
 const generateLoanReportSubAdmin = asyncHandler(async (req, res) => {
   try {
     let { start, end } = req.params;
@@ -302,41 +303,106 @@ const generateLoanReportSubAdmin = asyncHandler(async (req, res) => {
     // PDF Path
     const filePath = path.join(process.cwd(), "public", `loan-report-${Date.now()}.pdf`);
     const stream = fs.createWriteStream(filePath);
+    // doc.pipe(stream);
+
+    // // Title
+    // doc.fontSize(16).fillColor("#003366").text("SUBADMIN FARMER LOAN REPORT", { align: "center" });
+    // doc.moveDown(0.5);
+    // doc.fontSize(12).fillColor("black").text(`From: ${startDate.toDateString()} To: ${endDate.toDateString()}`, { align: "center" });
+    // doc.moveDown();
+
+    // // Each Farmer
+    // for (let farmer of farmers) {
+    //   doc.fontSize(12).fillColor("#333").text(`Farmer: ${farmer.farmerName}`);
+    //   doc.text(`Mobile: ${farmer.mobileNumber}`);
+    //   doc.text(`Address: ${farmer.address}`);
+    //   doc.text(`Total Loan: Rs. ${farmer.totalLoan}`);
+    //   doc.text(`Remaining: Rs. ${farmer.totalLoanRemaining}`);
+    //   doc.moveDown(0.5);
+
+    //   // Loan table header
+    //   doc.fontSize(10).fillColor("#000").text("Date", { continued: true, width: 100 });
+    //   doc.text("Original", { continued: true, width: 100 });
+    //   doc.text("Current", { continued: true, width: 100 });
+    //   doc.text("Paid Back", { align: "left" });
+
+    //   farmer.loan.forEach((loan) => {
+    //     const paidBack = loan.originalAmount - loan.loanAmount;
+    //     doc.text(new Date(loan.loanDate).toISOString().split("T")[0], { continued: true, width: 100 });
+    //     doc.text(`Rs. ${loan.originalAmount}`, { continued: true, width: 100 });
+    //     doc.text(`Rs. ${loan.loanAmount}`, { continued: true, width: 100 });
+    //     doc.text(`Rs. ${paidBack}`, { align: "left" });
+    //   });
+
+    //   doc.moveDown(1);
+    // }
+
+    // doc.end();
+
     doc.pipe(stream);
 
-    // Title
-    doc.fontSize(16).fillColor("#003366").text("SUBADMIN FARMER LOAN REPORT", { align: "center" });
-    doc.moveDown(0.5);
-    doc.fontSize(12).fillColor("black").text(`From: ${startDate.toDateString()} To: ${endDate.toDateString()}`, { align: "center" });
-    doc.moveDown();
+// Title
+doc.fontSize(16).fillColor("#003366").text("SUBADMIN FARMER LOAN REPORT", { align: "center" });
+doc.moveDown(0.5);
+doc.fontSize(12).fillColor("black").text(`From: ${startDate.toDateString()} To: ${endDate.toDateString()}`, { align: "center" });
+doc.moveDown();
 
-    // Each Farmer
-    for (let farmer of farmers) {
-      doc.fontSize(12).fillColor("#333").text(`Farmer: ${farmer.farmerName}`);
-      doc.text(`Mobile: ${farmer.mobileNumber}`);
-      doc.text(`Address: ${farmer.address}`);
-      doc.text(`Total Loan: Rs. ${farmer.totalLoan}`);
-      doc.text(`Remaining: Rs. ${farmer.totalLoanRemaining}`);
-      doc.moveDown(0.5);
+// Each Farmer
+for (let farmer of farmers) {
+  doc.moveDown(1); // Ensure spacing between farmer blocks
+  doc.x = 50; // ✅ Reset horizontal position before each farmer block
 
-      // Loan table header
-      doc.fontSize(10).fillColor("#000").text("Date", { continued: true, width: 100 });
-      doc.text("Original", { continued: true, width: 100 });
-      doc.text("Current", { continued: true, width: 100 });
-      doc.text("Paid Back", { align: "left" });
+  doc.fontSize(12).fillColor("#333").text(`Farmer: ${farmer.farmerName}`, 50);
+  doc.text(`Mobile: ${farmer.mobileNumber}`, 50);
+  doc.text(`Address: ${farmer.address}`, 50);
+  doc.text(`Total Loan: Rs. ${farmer.totalLoan}`, 50);
+  doc.text(`Remaining: Rs. ${farmer.totalLoanRemaining}`, 50);
+  doc.moveDown(0.5);
 
-      farmer.loan.forEach((loan) => {
-        const paidBack = loan.originalAmount - loan.loanAmount;
-        doc.text(new Date(loan.loanDate).toISOString().split("T")[0], { continued: true, width: 100 });
-        doc.text(`Rs. ${loan.originalAmount}`, { continued: true, width: 100 });
-        doc.text(`Rs. ${loan.loanAmount}`, { continued: true, width: 100 });
-        doc.text(`Rs. ${paidBack}`, { align: "left" });
-      });
+  // Loan table header
+  const tableTopY = doc.y;
+  doc.rect(50, tableTopY, 500, 20).fillAndStroke('#F0F8FF', '#003366');
+  doc.fillColor("#000").fontSize(10);
+  doc.text("Date", 55, tableTopY + 6, { width: 100 });
+  doc.text("Original", 155, tableTopY + 6, { width: 100 });
+  doc.text("Current", 255, tableTopY + 6, { width: 100 });
+  doc.text("Paid Back", 355, tableTopY + 6, { width: 100 });
 
-      doc.moveDown(1);
+  let currentY = tableTopY + 20;
+
+  // Loan Rows
+  farmer.loan.forEach((loan, index) => {
+    const paidBack = loan.originalAmount - loan.loanAmount;
+
+    // Alternate row background color
+    if (index % 2 === 0) {
+      doc.rect(50, currentY, 500, 20).fillAndStroke('#F8F9FA', '#CCE5FF');
+    } else {
+      doc.rect(50, currentY, 500, 20).fillAndStroke('#FFFFFF', '#CCE5FF');
     }
 
-    doc.end();
+    doc.fillColor("black").fontSize(9);
+    doc.text(new Date(loan.loanDate).toISOString().split("T")[0], 55, currentY + 6, { width: 100 });
+    doc.text(`Rs. ${loan.originalAmount.toFixed(2)}`, 155, currentY + 6, { width: 100 });
+    doc.text(`Rs. ${loan.loanAmount.toFixed(2)}`, 255, currentY + 6, { width: 100 });
+    doc.text(`Rs. ${paidBack.toFixed(2)}`, 355, currentY + 6, { width: 100 });
+
+    currentY += 20;
+
+    // Move to new page if near bottom
+    if (currentY + 30 > doc.page.height - 50) {
+      doc.addPage();
+      currentY = 50;
+    }
+  });
+
+  doc.y = currentY + 10; // Set Y after the table
+  doc.moveDown(1);
+}
+
+
+doc.end();
+
 
     stream.on("finish", () => {
       return res.download(filePath, "loan-report.pdf", (err) => {

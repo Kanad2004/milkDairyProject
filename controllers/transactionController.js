@@ -7,6 +7,13 @@ import XLSX from "xlsx";
 import {Branch} from "../model/Branch.js";
 import {SubAdmin} from "../model/SubAdmin.js";
 import moment from "moment"
+import path from "path";
+
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // 1. Save a new Transaction
 export const saveTransaction = asyncHandler(async (req, res) => {
   const { customerName, mobileNumber, items, time } = req.body;
@@ -205,7 +212,6 @@ const getDateRange = (type) => {
   return { startDate, endDate };
 };
 
-
 export const generateReport = async (req, res) => {
   try {
     const { reportType } = req.query;
@@ -290,11 +296,9 @@ export const generateCustomerTransactionReport = async (req, res) => {
       return res.status(400).json({ success: false, message: "Start date and end date are required" });
     }
 
-    // Parse start and end dates
     const start = new Date(startDate);
     const end = new Date(endDate);
 
-    // Create query filter for transactions within date range
     const query = {
       time: { $gte: start, $lte: end },
     };
@@ -303,7 +307,6 @@ export const generateCustomerTransactionReport = async (req, res) => {
       query.subAdmin = req.subAdmin._id;
     }
 
-    // Fetch transactions and branch details
     const transactions = await Transaction.find(query).populate('subAdmin');
     const branch = req.subAdmin ? await Branch.findById(req.subAdmin.branch) : null;
 
@@ -311,17 +314,19 @@ export const generateCustomerTransactionReport = async (req, res) => {
       return res.status(404).json({ success: false, message: "No transactions found" });
     }
 
-    // Create a PDF document
     const doc = new PDFDocument({ size: 'A4', margins: { top: 50, bottom: 50, left: 50, right: 50 } });
-    const filePath = path.join('reports', `Transaction_Report_${Date.now()}.pdf`);
-    doc.pipe(fs.createWriteStream(filePath));
+    console.log("__dirname: ", __dirname);
 
-    // Header
+    const filePath = path.join(__dirname, '..', 'reports', `Transaction_Report_${Date.now()}.pdf`);
+    console.log("filePath: ", filePath);
+
+    const writeStream = fs.createWriteStream(filePath);
+    doc.pipe(writeStream);
+
     doc.rect(50, 40, 495, 70).fillAndStroke('#F0F8FF', '#003366');
     doc.fontSize(22).fillColor('#003366').text('TRANSACTION REPORT', 50, 55, { align: 'center' });
     doc.fontSize(10).fillColor('#003366').text(`Date Range: ${startDate} to ${endDate}`, 50, 85, { align: 'center' });
 
-    // Branch and SubAdmin Details
     if (branch) {
       doc.moveDown(2);
       doc.fontSize(16).fillColor('#003366').text('BRANCH DETAILS', { underline: true });
@@ -331,7 +336,6 @@ export const generateCustomerTransactionReport = async (req, res) => {
       doc.text(`Location: ${branch.location}`);
     }
 
-    // Table Header
     doc.moveDown(4);
     doc.fontSize(14).fillColor('#003366').text('TRANSACTION DETAILS', { underline: true });
     doc.moveDown();
@@ -367,7 +371,6 @@ export const generateCustomerTransactionReport = async (req, res) => {
     let tableStartY = doc.y;
     tableStartY = drawTable(transactions, tableStartY);
 
-    // Footer with page count
     const pageCount = doc.bufferedPageRange().count;
     for (let i = 0; i < pageCount; i++) {
       doc.switchToPage(i);
@@ -379,17 +382,25 @@ export const generateCustomerTransactionReport = async (req, res) => {
 
     doc.end();
 
-    // Send the PDF file as a response
-    res.download(filePath, (err) => {
-      if (err) {
-        console.error("Error sending file:", err);
-        return res.status(500).json({ success: false, message: "Error downloading file" });
-      }
+    // ✅ Only changed logic below this line
+    writeStream.on('finish', () => {
+      res.download(filePath, (err) => {
+        if (err) {
+          console.error("Error sending file:", err);
+          return res.status(500).json({ success: false, message: "Error downloading file" });
+        }
 
-      fs.unlink(filePath, (err) => {
-        if (err) console.error("Error deleting file:", err);
+        fs.unlink(filePath, (err) => {
+          if (err) console.error("Error deleting file:", err);
+        });
       });
     });
+
+    writeStream.on('error', (err) => {
+      console.error("Write stream error:", err);
+      return res.status(500).json({ success: false, message: "Error writing PDF file" });
+    });
+
   } catch (error) {
     console.error("Error generating report:", error);
     res.status(500).json({ success: false, message: error.message });
@@ -621,6 +632,7 @@ export const generateReportAdmin = async (req, res) => {
 // import mongoose from "mongoose";
 import { Farmer } from "../model/Farmer.js"; // your schema
 import ExcelJS from "exceljs";
+
 // import PDFDocument from "pdfkit";
 // import fs from "fs";
 

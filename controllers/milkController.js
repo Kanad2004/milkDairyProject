@@ -336,7 +336,8 @@ const getAllFarmersTransactionReportOfBranch = async (req, res, next) => {
 
 /**
  * Generate Excel report for a single farmer's transactions based on mobile number
- */
+*/
+
 const getFarmerTransactionReportByMobileNumber = async (req, res, next) => {
   try {
     const { mobileNumber } = req.params;
@@ -417,7 +418,7 @@ const getFarmerTransactionReportByMobileNumber = async (req, res, next) => {
 
 /**
  * Generate Excel report for all farmers in a specific branch
- */
+*/
 
 const getAllFarmersTransactionReportsOfBranch = async (req, res, next) => {
   try {
@@ -513,6 +514,7 @@ const getAllFarmersTransactionReportsOfBranch = async (req, res, next) => {
 
 import PDFDocument from 'pdfkit';
 
+//This has to be checked 
 export const downloadBranchTransactionReport = async (req, res) => {
   try {
     const { start, end } = req.params;
@@ -528,6 +530,7 @@ export const downloadBranchTransactionReport = async (req, res) => {
     }
 
     let allTransactions = [];
+
     farmers.forEach(farmer => {
       farmer.transaction.forEach(t => {
         const tDate = new Date(t.transactionDate);
@@ -545,6 +548,7 @@ export const downloadBranchTransactionReport = async (req, res) => {
         }
       });
     });
+
 
     if (!allTransactions.length) {
       return res.status(404).json({ message: 'No transactions found' });
@@ -595,7 +599,7 @@ export const downloadBranchTransactionReport = async (req, res) => {
         totalAmount += amount;
 
         doc.fillColor('#000000').fontSize(9);
-        doc.text(t.farmerName, 55, startY + 6);
+        doc.text(t.farmerId, 55, startY + 6);
         doc.text(t.milkQuantity.toFixed(2), 180, startY + 6);
         doc.text(t.pricePerLitre.toFixed(2), 240, startY + 6);
         doc.text(amount.toFixed(2), 310, startY + 6);
@@ -618,8 +622,23 @@ export const downloadBranchTransactionReport = async (req, res) => {
 
     // const morning = allTransactions.filter(t => t.transactionTime.toLowerCase() === 'morning');
     // const evening = allTransactions.filter(t => t.transactionTime.toLowerCase() === 'evening');
-    const morning = allTransactions.filter(t => t.transactionTime?.toLowerCase() === "morning");
-    const evening = allTransactions.filter(t => t.transactionTime?.toLowerCase() === "evening");
+
+    allTransactions.forEach((t) => {
+      console.log("t: " , t) ;
+      console.log("\n")
+    })
+    const cleanedTransactions = allTransactions.map(t => ({...t._doc , farmerId: t.$__parent?.farmerId }));
+    console.log("cleanedTransactions : " , cleanedTransactions);
+
+    const morning = cleanedTransactions.filter(t => t.transactionTime?.toLowerCase() === "morning");
+    const evening = cleanedTransactions.filter(t => t.transactionTime?.toLowerCase() === "evening");
+
+    // for(let i = 0 ; i < allTransactions.length ; i++)
+    // {
+    //   console.log(allTransactions[i]);
+    // }
+    // const morning = allTransactions.filter(t => t.transactionTime?.toLowerCase() === "morning");
+    // const evening = allTransactions.filter(t => t.transactionTime?.toLowerCase() === "evening");
     
     if (morning.length) currentY = drawTransactionTable('MORNING TRANSACTIONS', morning, currentY);
     if (evening.length) currentY = drawTransactionTable('EVENING TRANSACTIONS', evening, currentY);
