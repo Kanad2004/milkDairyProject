@@ -616,9 +616,11 @@ export const downloadBranchTransactionReport = async (req, res) => {
       return startY + 30;
     };
 
-    const morning = allTransactions.filter(t => t.transactionTime.toLowerCase() === 'morning');
-    const evening = allTransactions.filter(t => t.transactionTime.toLowerCase() === 'evening');
-
+    // const morning = allTransactions.filter(t => t.transactionTime.toLowerCase() === 'morning');
+    // const evening = allTransactions.filter(t => t.transactionTime.toLowerCase() === 'evening');
+    const morning = allTransactions.filter(t => t.transactionTime?.toLowerCase() === "morning");
+    const evening = allTransactions.filter(t => t.transactionTime?.toLowerCase() === "evening");
+    
     if (morning.length) currentY = drawTransactionTable('MORNING TRANSACTIONS', morning, currentY);
     if (evening.length) currentY = drawTransactionTable('EVENING TRANSACTIONS', evening, currentY);
 
@@ -647,7 +649,7 @@ export const getFarmerTransactionByFarmerID = async (req, res, next) => {
       return next(new ApiError(400, 'Farmer ID, start, and end dates are required'));
     }
 
-    const farmer = await Farmer.findById(farmerId);
+    const farmer = await Farmer.findOne({ farmerId: parseInt(farmerId) });
     if (!farmer || !farmer.transaction || farmer.transaction.length === 0) {
       return next(new ApiError(404, 'No transactions found for this farmer'));
     }
@@ -663,6 +665,12 @@ export const getFarmerTransactionByFarmerID = async (req, res, next) => {
     if (!transactions.length) {
       return next(new ApiError(404, 'No transactions found in this date range'));
     }
+
+    // const morningTransactions = transactions.filter(t => t.transactionTime.toLowerCase() === "morning");
+    // const eveningTransactions = transactions.filter(t => t.transactionTime.toLowerCase() === "evening");
+
+    const morningTransactions = transactions.filter(t => t.transactionTime?.toLowerCase() === "morning");
+    const eveningTransactions = transactions.filter(t => t.transactionTime?.toLowerCase() === "evening");
 
     const fileName = `Farmer_Report_${farmer.farmerName}_${start}_${end}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
@@ -683,16 +691,13 @@ export const getFarmerTransactionByFarmerID = async (req, res, next) => {
     doc.text(`Mobile: ${farmer.mobileNumber}`);
     doc.text(`Address: ${farmer.address}`);
     doc.text(`Joining Date: ${new Date(farmer.joiningDate).toLocaleDateString()}`);
-    doc.text(`Total Loan: ₹${farmer.totalLoan}`);
-    doc.text(`Loan Paid: ₹${farmer.totalLoanPaidBack}`);
-    doc.text(`Loan Remaining: ₹${farmer.totalLoanRemaining}`);
     doc.moveDown();
 
-    // Transaction Table Header
-    doc.fontSize(14).fillColor('#003366').text('TRANSACTIONS', { underline: true });
-    doc.moveDown();
+    // Table Drawer
+    const drawTable = (title, transactions, startY) => {
+      doc.fontSize(13).fillColor('#003366').text(title, { underline: true });
+      doc.moveDown(0.5);
 
-    const drawTable = (transactions, startY) => {
       doc.rect(50, startY, 495, 20).fillAndStroke('#003366', '#003366');
       doc.fillColor('#FFFFFF').fontSize(10);
       doc.text('Date', 55, startY + 6);
@@ -727,15 +732,16 @@ export const getFarmerTransactionByFarmerID = async (req, res, next) => {
         startY += 20;
       });
 
-      // Totals row
       doc.rect(50, startY, 495, 22).fillAndStroke('#E6F2FF', '#003366');
       doc.fillColor('#003366').fontSize(10).font('Helvetica-Bold');
       doc.text('TOTAL', 55, startY + 6);
       doc.text(totalQty.toFixed(2), 130, startY + 6);
       doc.text(totalAmount.toFixed(2), 280, startY + 6);
+      doc.moveDown(2);
     };
 
-    drawTable(transactions, doc.y);
+    drawTable('Morning Milk Entries', morningTransactions, doc.y);
+    drawTable('Evening Milk Entries', eveningTransactions, doc.y);
 
     // Footer
     const pageCount = doc.bufferedPageRange().count;

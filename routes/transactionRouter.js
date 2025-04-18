@@ -67,7 +67,7 @@ transactionRouter.get(
 
 //subadmin
 transactionRouter.get(
-  "/subAdmin/customer/:start/:end",
+  "/subAdmin/customer/:startDate/:endDate",
   authenticateSubAdmin,
   authorizeRoleSubAdmin(["subAdmin"]),
   generateCustomerTransactionReport
@@ -118,7 +118,7 @@ transactionRouter.get(
 );
 
 transactionRouter.get(
-  "/ReportByFarmerId/:farmerId/:day",
+  "/ReportByFarmerId/:farmerId/:start/:end",
   // authenticateAdmin,
   // authorizeRoleAdmin(["Admin"]),
   downloadReportByFarmerId

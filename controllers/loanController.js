@@ -248,14 +248,14 @@ const getDateRange = (type) => {
 };
 
 // Generate loan report for all farmers
+import PDFDocument from 'pdfkit';
+
 const generateLoanReportSubAdmin = asyncHandler(async (req, res) => {
   try {
-    let { startDate, endDate } = req.query;
-    // const type = reportType;
-    // const { startDate, endDate } = getDateRange(type);
-    startDate = new Date("2025-04-10");
-    endDate = new Date("2025-04-20");
-    endDate.setHours(23, 59, 59, 999);
+    let { start, end } = req.params;
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    // endDate.setHours(23, 59, 59, 999);
 
     let query = {
       loan: { $elemMatch: { loanDate: { $gte: startDate, $lte: endDate } } },
@@ -265,8 +265,6 @@ const generateLoanReportSubAdmin = asyncHandler(async (req, res) => {
       query.subAdmin = req.subAdmin._id;
     }
 
-    console.log("startDate: " , startDate);
-    console.log("endDate: " , endDate);
     const farmers = await Farmer.aggregate([
       { $match: query },
       {
@@ -293,64 +291,68 @@ const generateLoanReportSubAdmin = asyncHandler(async (req, res) => {
       },
     ]);
 
-    console.log("farmers: ", farmers);
     if (!farmers || farmers.length === 0) {
-      console.log("No loans found in the given date range");
       return res
         .status(404)
         .json({ success: false, message: "No loans found in the given date range" });
     }
 
-    const workbook = new exceljs.Workbook();
-    const worksheet = workbook.addWorksheet("Loans");
+    const doc = new PDFDocument({ margin: 30, size: "A4" });
 
-    worksheet.columns = [
-      { header: "Farmer ID", key: "farmerId", width: 20 },
-      { header: "Farmer Name", key: "farmerName", width: 20 },
-      { header: "Mobile Number", key: "mobileNumber", width: 20 },
-      { header: "Address", key: "address", width: 20 },
-      { header: "Total Loan", key: "totalLoan", width: 20 },
-      { header: "Total Loan Remaining", key: "totalLoanRemaining", width: 20 },
-      { header: "Loan ID", key: "loanId", width: 20 },
-      { header: "Loan Date", key: "loanDate", width: 20 },
-      { header: "Loan Amount", key: "loanAmount", width: 20 },
-    ];
+    // PDF Path
+    const filePath = path.join(process.cwd(), "public", `loan-report-${Date.now()}.pdf`);
+    const stream = fs.createWriteStream(filePath);
+    doc.pipe(stream);
 
-    farmers.forEach((farmer) => {
+    // Title
+    doc.fontSize(16).fillColor("#003366").text("SUBADMIN FARMER LOAN REPORT", { align: "center" });
+    doc.moveDown(0.5);
+    doc.fontSize(12).fillColor("black").text(`From: ${startDate.toDateString()} To: ${endDate.toDateString()}`, { align: "center" });
+    doc.moveDown();
+
+    // Each Farmer
+    for (let farmer of farmers) {
+      doc.fontSize(12).fillColor("#333").text(`Farmer: ${farmer.farmerName}`);
+      doc.text(`Mobile: ${farmer.mobileNumber}`);
+      doc.text(`Address: ${farmer.address}`);
+      doc.text(`Total Loan: Rs. ${farmer.totalLoan}`);
+      doc.text(`Remaining: Rs. ${farmer.totalLoanRemaining}`);
+      doc.moveDown(0.5);
+
+      // Loan table header
+      doc.fontSize(10).fillColor("#000").text("Date", { continued: true, width: 100 });
+      doc.text("Original", { continued: true, width: 100 });
+      doc.text("Current", { continued: true, width: 100 });
+      doc.text("Paid Back", { align: "left" });
+
       farmer.loan.forEach((loan) => {
-        worksheet.addRow({
-          farmerId: farmer._id,
-          farmerName: farmer.farmerName,
-          mobileNumber: farmer.mobileNumber,
-          address: farmer.address,
-          totalLoan: farmer.totalLoan,
-          totalLoanRemaining: farmer.totalLoanRemaining,
-          loanId: loan._id,
-          loanDate: loan.loanDate.toISOString().split("T")[0],
-          loanAmount: loan.loanAmount,
-        });
+        const paidBack = loan.originalAmount - loan.loanAmount;
+        doc.text(new Date(loan.loanDate).toISOString().split("T")[0], { continued: true, width: 100 });
+        doc.text(`Rs. ${loan.originalAmount}`, { continued: true, width: 100 });
+        doc.text(`Rs. ${loan.loanAmount}`, { continued: true, width: 100 });
+        doc.text(`Rs. ${paidBack}`, { align: "left" });
+      });
+
+      doc.moveDown(1);
+    }
+
+    doc.end();
+
+    stream.on("finish", () => {
+      return res.download(filePath, "loan-report.pdf", (err) => {
+        if (err) {
+          console.error("Download Error:", err);
+          return res.status(500).json({ success: false, message: "Download failed" });
+        }
+        setTimeout(() => fs.unlinkSync(filePath), 5000);
       });
     });
-
-    const filePath = path.join(process.cwd(), "public", "loans.xlsx");
-
-    await workbook.xlsx.writeFile(filePath);
-
-    return res.download(filePath, "loans.xlsx", (err) => {
-      if (err) {
-        console.error("Download Error:", err);
-        return res
-          .status(500)
-          .json({ success: false, message: "Error occurred while downloading the file", error: err.message });
-      }
-      setTimeout(() => fs.unlinkSync(filePath), 5000);
-    });
-
   } catch (error) {
-    console.error("Error Generating Loan Report:", error);
+    console.error("Error Generating PDF:", error);
     return res.status(500).json({ success: false, message: "Internal Server Error", error: error.message });
   }
 });
+
 
 
 const generateLoanReportAdmin = asyncHandler(async (req, res) => {
@@ -477,7 +479,7 @@ const generateLoanReportByMobileNumber = asyncHandler(async (req, res) => {
     setTimeout(() => fs.unlinkSync(filePath), 5000);
   });
 });
-import PDFDocument from 'pdfkit';
+
 // import asyncHandler from 'express-async-handler';
 
 export const generateLoanPDFByFarmerIdWithDateRange = asyncHandler(async (req, res) => {

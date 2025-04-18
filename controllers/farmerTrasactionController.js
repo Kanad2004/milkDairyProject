@@ -679,29 +679,32 @@ export const downloadAllFarmersPDFByDate = async (req, res) => {
   }
 };
 
+
+
 export const downloadReportByFarmerId = async (req, res) => {
   try {
-    const { farmerId, day } = req.params;
+    const { farmerId, start, end } = req.params;
     const farmer = await Farmer.findOne({ farmerId });
+
 
     if (!farmer) {
       return res.status(404).json({ message: 'Farmer not found' });
     }
 
-    // Validate day parameter
-    const validDays = ['1', '11', '21'];
-    if (!validDays.includes(day)) {
-      return res.status(400).json({ message: 'Day must be 1, 11, or 21' });
-    }
+    // // Validate day parameter
+    // const validDays = ['1', '11', '21'];
+    // if (!validDays.includes(day)) {
+    //   return res.status(400).json({ message: 'Day must be 1, 11, or 21' });
+    // }
 
-    // Calculate date range
-    const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
+    // // Calculate date range
+    // const today = new Date();
+    // const currentMonth = today.getMonth();
+    // const currentYear = today.getFullYear();
 
     // Create start date based on the provided day
-    const startDate = new Date(currentYear, currentMonth, parseInt(day));
-    const endDate = new Date(currentYear, currentMonth, parseInt(day) + 9);
+    const startDate = new Date(start);
+    const endDate = new Date(end);
 
     // Filter transactions for the date range
     const filteredTransactions = farmer.transaction.filter(t => {
