@@ -256,32 +256,32 @@ const deleteMilkTransaction = asyncHandler(async (req, res) => {
     );
 });
 
-// Get transactions of a farmer by mobile number (Admin & SubAdmin restricted)
-export const getFarmerTransactionByMobileNumber = async (req, res, next) => {
-  try {
-    const { mobileNumber } = req.params;
+// // Get transactions of a farmer by mobile number (Admin & SubAdmin restricted)
+// export const getFarmerTransactionByMobileNumber = async (req, res, next) => {
+//   try {
+//     const { mobileNumber } = req.params;
 
-    if (!mobileNumber) {
-      return next(new ApiError(400, "Mobile number is required"));
-    }
+//     if (!mobileNumber) {
+//       return next(new ApiError(400, "Mobile number is required"));
+//     }
 
-    let query = { mobileNumber };
+//     let query = { mobileNumber };
 
-    // If SubAdmin, restrict access to their branch only
-    if (req.subAdmin) {
-      query.subAdmin = req.subAdmin._id;
-    }
+//     // If SubAdmin, restrict access to their branch only
+//     if (req.subAdmin) {
+//       query.subAdmin = req.subAdmin._id;
+//     }
 
-    const farmer = await Farmer.findOne(query).select("farmerName transaction");
-    if (!farmer) {
-      return next(new ApiError(404, "Farmer not found"));
-    }
+//     const farmer = await Farmer.findOne(query).select("farmerName transaction");
+//     if (!farmer) {
+//       return next(new ApiError(404, "Farmer not found"));
+//     }
 
-    res.status(200).json({ success: true, transactions: farmer.transaction });
-  } catch (error) {
-    next(new ApiError(500, "Server error"));
-  }
-};
+//     res.status(200).json({ success: true, transactions: farmer.transaction });
+//   } catch (error) {
+//     next(new ApiError(500, "Server error"));
+//   }
+// };
 
 // Get all transactions for a branch (Daily, Weekly, Monthly) for Admin & SubAdmin
 const getAllFarmersTransactionReportOfBranch = async (req, res, next) => {
@@ -418,6 +418,7 @@ const getFarmerTransactionReportByMobileNumber = async (req, res, next) => {
 /**
  * Generate Excel report for all farmers in a specific branch
  */
+
 const getAllFarmersTransactionReportsOfBranch = async (req, res, next) => {
   try {
     const subAdminId = req.subAdmin._id;
@@ -507,6 +508,249 @@ const getAllFarmersTransactionReportsOfBranch = async (req, res, next) => {
     );
   } catch (error) {
     next(new ApiError(500, "Internal Server error"));
+  }
+};
+
+import PDFDocument from 'pdfkit';
+
+export const downloadBranchTransactionReport = async (req, res) => {
+  try {
+    const { start, end } = req.params;
+    const subAdminId = req.subAdmin._id;
+
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+
+    const farmers = await Farmer.find({ subAdmin: subAdminId });
+
+    if (!farmers.length) {
+      return res.status(404).json({ message: 'No farmers found' });
+    }
+
+    let allTransactions = [];
+    farmers.forEach(farmer => {
+      farmer.transaction.forEach(t => {
+        const tDate = new Date(t.transactionDate);
+        if (tDate >= startDate && tDate <= endDate) {
+          allTransactions.push({
+            farmerName: farmer.farmerName,
+            mobileNumber: farmer.mobileNumber,
+            address: farmer.address,
+            joiningDate: farmer.joiningDate,
+            totalLoan: farmer.totalLoan,
+            totalLoanPaidBack: farmer.totalLoanPaidBack,
+            totalLoanRemaining: farmer.totalLoanRemaining,
+            ...t,
+          });
+        }
+      });
+    });
+
+    if (!allTransactions.length) {
+      return res.status(404).json({ message: 'No transactions found' });
+    }
+
+    const fileName = `Branch_Report_${start}_${end}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+
+    const doc = new PDFDocument({ margins: { top: 50, bottom: 50, left: 50, right: 50 }, size: 'A4' });
+    doc.pipe(res);
+
+    // Header
+    doc.rect(50, 40, 495, 70).fillAndStroke('#F0F8FF', '#003366');
+    doc.fontSize(22).fillColor('#003366').text('BRANCH MILK REPORT', 50, 55, { align: 'center' });
+    doc.fontSize(10).fillColor('#003366').text(`Date Range: ${start} to ${end}`, 50, 85, { align: 'center' });
+
+    doc.moveDown(4);
+    doc.fontSize(16).fillColor('#003366').text('TRANSACTION SUMMARY', { align: 'center', underline: true });
+    doc.moveDown();
+
+    let currentY = doc.y;
+
+    const drawTransactionTable = (title, transactions, startY) => {
+      if (!transactions.length) return startY;
+      doc.fontSize(12).fillColor('#003366').text(title, 50, startY, { underline: true });
+      startY += 20;
+      doc.rect(50, startY, 495, 20).fillAndStroke('#003366', '#003366');
+      doc.fillColor('#FFFFFF').fontSize(10);
+      doc.text('Farmer', 55, startY + 6);
+      doc.text('Qty (L)', 180, startY + 6);
+      doc.text('Rate (₹)', 240, startY + 6);
+      doc.text('Amount (₹)', 310, startY + 6);
+      doc.text('Fat', 390, startY + 6);
+      doc.text('SNF', 430, startY + 6);
+      doc.text('Date', 470, startY + 6);
+
+      startY += 20;
+      let totalLiters = 0;
+      let totalAmount = 0;
+
+      transactions.forEach((t, index) => {
+        if (index % 2 === 0) doc.rect(50, startY, 495, 20).fillAndStroke('#F8F9FA', '#CCE5FF');
+        else doc.rect(50, startY, 495, 20).fillAndStroke('#FFFFFF', '#CCE5FF');
+
+        const amount = t.milkQuantity * t.pricePerLitre;
+        totalLiters += t.milkQuantity;
+        totalAmount += amount;
+
+        doc.fillColor('#000000').fontSize(9);
+        doc.text(t.farmerName, 55, startY + 6);
+        doc.text(t.milkQuantity.toFixed(2), 180, startY + 6);
+        doc.text(t.pricePerLitre.toFixed(2), 240, startY + 6);
+        doc.text(amount.toFixed(2), 310, startY + 6);
+        doc.text(t.fat.toFixed(1), 390, startY + 6);
+        doc.text(t.snf.toFixed(1), 430, startY + 6);
+        doc.text(new Date(t.transactionDate).toLocaleDateString(), 470, startY + 6);
+
+        startY += 20;
+      });
+
+      // Totals row
+      doc.rect(50, startY, 495, 22).fillAndStroke('#E6F2FF', '#003366');
+      doc.fillColor('#003366').fontSize(10).font('Helvetica-Bold');
+      doc.text('TOTAL', 55, startY + 6);
+      doc.text(totalLiters.toFixed(2), 180, startY + 6);
+      doc.text(totalAmount.toFixed(2), 310, startY + 6);
+
+      return startY + 30;
+    };
+
+    const morning = allTransactions.filter(t => t.transactionTime.toLowerCase() === 'morning');
+    const evening = allTransactions.filter(t => t.transactionTime.toLowerCase() === 'evening');
+
+    if (morning.length) currentY = drawTransactionTable('MORNING TRANSACTIONS', morning, currentY);
+    if (evening.length) currentY = drawTransactionTable('EVENING TRANSACTIONS', evening, currentY);
+
+    // Add footer
+    const pageCount = doc.bufferedPageRange().count;
+    for (let i = 0; i < pageCount; i++) {
+      doc.switchToPage(i);
+      doc.moveTo(50, 780).lineTo(545, 780).stroke('#003366');
+      doc.fontSize(8).fillColor('#666666')
+        .text(`Milkman Management System - Report generated on ${new Date().toLocaleString()}`, 50, 790)
+        .text(`Page ${i + 1} of ${pageCount}`, 450, 790);
+    }
+
+    doc.end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error generating PDF' });
+  }
+};
+
+export const getFarmerTransactionByFarmerID = async (req, res, next) => {
+  try {
+    const { farmerId, start, end } = req.params;
+
+    if (!farmerId || !start || !end) {
+      return next(new ApiError(400, 'Farmer ID, start, and end dates are required'));
+    }
+
+    const farmer = await Farmer.findById(farmerId);
+    if (!farmer || !farmer.transaction || farmer.transaction.length === 0) {
+      return next(new ApiError(404, 'No transactions found for this farmer'));
+    }
+
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+
+    const transactions = farmer.transaction.filter(t => {
+      const tDate = new Date(t.transactionDate);
+      return tDate >= startDate && tDate <= endDate;
+    });
+
+    if (!transactions.length) {
+      return next(new ApiError(404, 'No transactions found in this date range'));
+    }
+
+    const fileName = `Farmer_Report_${farmer.farmerName}_${start}_${end}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+
+    const doc = new PDFDocument({ margins: { top: 50, bottom: 50, left: 50, right: 50 }, size: 'A4' });
+    doc.pipe(res);
+
+    // Header
+    doc.rect(50, 40, 495, 70).fillAndStroke('#F0F8FF', '#003366');
+    doc.fontSize(22).fillColor('#003366').text('FARMER TRANSACTION REPORT', 50, 55, { align: 'center' });
+    doc.fontSize(10).fillColor('#003366').text(`Date Range: ${start} to ${end}`, 50, 85, { align: 'center' });
+
+    doc.moveDown(4);
+    doc.fontSize(16).fillColor('#003366').text('FARMER DETAILS', { align: 'left', underline: true });
+    doc.fontSize(10).fillColor('black');
+    doc.text(`Name: ${farmer.farmerName}`);
+    doc.text(`Mobile: ${farmer.mobileNumber}`);
+    doc.text(`Address: ${farmer.address}`);
+    doc.text(`Joining Date: ${new Date(farmer.joiningDate).toLocaleDateString()}`);
+    doc.text(`Total Loan: ₹${farmer.totalLoan}`);
+    doc.text(`Loan Paid: ₹${farmer.totalLoanPaidBack}`);
+    doc.text(`Loan Remaining: ₹${farmer.totalLoanRemaining}`);
+    doc.moveDown();
+
+    // Transaction Table Header
+    doc.fontSize(14).fillColor('#003366').text('TRANSACTIONS', { underline: true });
+    doc.moveDown();
+
+    const drawTable = (transactions, startY) => {
+      doc.rect(50, startY, 495, 20).fillAndStroke('#003366', '#003366');
+      doc.fillColor('#FFFFFF').fontSize(10);
+      doc.text('Date', 55, startY + 6);
+      doc.text('Milk Qty (L)', 130, startY + 6);
+      doc.text('Rate (₹)', 210, startY + 6);
+      doc.text('Amount (₹)', 280, startY + 6);
+      doc.text('Fat', 360, startY + 6);
+      doc.text('SNF', 410, startY + 6);
+      doc.text('Milk Type', 460, startY + 6);
+
+      startY += 20;
+      let totalAmount = 0;
+      let totalQty = 0;
+
+      transactions.forEach((t, i) => {
+        if (i % 2 === 0) doc.rect(50, startY, 495, 20).fillAndStroke('#F8F9FA', '#CCE5FF');
+        else doc.rect(50, startY, 495, 20).fillAndStroke('#FFFFFF', '#CCE5FF');
+
+        const amount = t.milkQuantity * t.pricePerLitre;
+        totalQty += t.milkQuantity;
+        totalAmount += amount;
+
+        doc.fillColor('black').fontSize(9);
+        doc.text(new Date(t.transactionDate).toLocaleDateString(), 55, startY + 6);
+        doc.text(t.milkQuantity.toFixed(2), 130, startY + 6);
+        doc.text(t.pricePerLitre.toFixed(2), 210, startY + 6);
+        doc.text(amount.toFixed(2), 280, startY + 6);
+        doc.text(t.fat.toFixed(1), 360, startY + 6);
+        doc.text(t.snf.toFixed(1), 410, startY + 6);
+        doc.text(t.milkType, 460, startY + 6);
+
+        startY += 20;
+      });
+
+      // Totals row
+      doc.rect(50, startY, 495, 22).fillAndStroke('#E6F2FF', '#003366');
+      doc.fillColor('#003366').fontSize(10).font('Helvetica-Bold');
+      doc.text('TOTAL', 55, startY + 6);
+      doc.text(totalQty.toFixed(2), 130, startY + 6);
+      doc.text(totalAmount.toFixed(2), 280, startY + 6);
+    };
+
+    drawTable(transactions, doc.y);
+
+    // Footer
+    const pageCount = doc.bufferedPageRange().count;
+    for (let i = 0; i < pageCount; i++) {
+      doc.switchToPage(i);
+      doc.moveTo(50, 780).lineTo(545, 780).stroke('#003366');
+      doc.fontSize(8).fillColor('#666666')
+        .text(`Milkman Management System - Report generated on ${new Date().toLocaleString()}`, 50, 790)
+        .text(`Page ${i + 1} of ${pageCount}`, 450, 790);
+    }
+
+    doc.end();
+  } catch (err) {
+    console.error(err);
+    next(new ApiError(500, 'Server error'));
   }
 };
 

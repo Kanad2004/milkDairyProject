@@ -449,130 +449,20 @@ doc.font('Helvetica').text('Loan Remaining:', 300, currentY)
     }
     
     doc.end();
-
-    // // Wait for file creation, then send it
-    // writeStream.on('finish', () => {
-    //   res.download(pdfPath, fileName, (err) => {
-    //     if (err) {
-    //       console.error('Download error:', err);
-    //       res.status(500).json({ message: 'Error downloading PDF' });
-    //     }
-    //     // Clean up the generated PDF file after download
-    //     fs.unlink(pdfPath, (unlinkErr) => {
-    //       if (unlinkErr) {
-    //         console.error('Error deleting PDF:', unlinkErr);
-    //       }
-    //     });
-    //   });
-    // });
-    // writeStream.on('finish', () => {
-    //     res.setHeader('Content-Type', 'application/pdf');
-    //     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-      
-    //     const readStream = fs.createReadStream(pdfPath);
-    //     readStream.pipe(res);
-      
-    //     readStream.on('close', () => {
-    //       fs.unlink(pdfPath, (unlinkErr) => {
-    //         if (unlinkErr) {
-    //           console.error('Error deleting PDF:', unlinkErr);
-    //         }
-    //       });
-    //     });
-      
-    //     readStream.on('error', (err) => {
-    //       console.error('Error reading PDF file:', err);
-    //       res.status(500).end();
-    //     });
-    //   });
-      
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error generating PDF' });
   }
 }; 
 
-// import express from 'express';
-// import PDFDocument from 'pdfkit';
-// import { Farmer } from '../model/Farmer.js';
 
-// export const downloadAllFarmersPDF = async (req, res) => {
-//   try {
-//     const farmers = await Farmer.find();
-
-//     if (farmers.length === 0) {
-//       return res.status(404).json({ message: 'No farmers found' });
-//     }
-
-//     const fileName = 'All_Farmers_Report.pdf';
-//     res.setHeader('Content-Type', 'application/pdf');
-//     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-
-//     const doc = new PDFDocument({ size: 'A4', margin: 50 });
-//     doc.pipe(res);
-
-//     // Helper: Create report for a single farmer
-//     const generateFarmerReport = (doc, farmer) => {
-//       doc.addPage();
-
-//       doc.fontSize(18).fillColor('#003366').text(`Farmer: ${farmer.farmerName}`, { align: 'center' });
-//       doc.moveDown();
-//       doc.fontSize(12).fillColor('black');
-//       doc.text(`Mobile: ${farmer.mobileNumber}`);
-//       doc.text(`Address: ${farmer.address}`);
-//       doc.text(`Joining Date: ${new Date(farmer.joiningDate).toDateString()}`);
-//       doc.moveDown();
-
-//       doc.fontSize(14).fillColor('#003366').text('Transactions:', { underline: true });
-//       doc.moveDown(0.5);
-
-//       if (!farmer.transaction || farmer.transaction.length === 0) {
-//         doc.fontSize(10).text('No transactions found.');
-//         return;
-//       }
-
-//       doc.fontSize(10).fillColor('black');
-//       farmer.transaction.forEach(t => {
-//         const date = new Date(t.transactionDate).toLocaleDateString();
-//         const amount = t.milkQuantity * t.pricePerLitre;
-//         doc.text(
-//           `${date} - ${t.transactionTime} - ${t.milkType.toUpperCase()} - ${t.milkQuantity}L @ ₹${t.pricePerLitre} = ₹${amount.toFixed(2)}`
-//         );
-//       });
-
-//       doc.moveDown();
-
-//       // Loan Summary
-//       doc.fontSize(12).fillColor('#003366').text('Loan Summary:', { underline: true });
-//       doc.fontSize(10).fillColor('black');
-//       doc.text(`Total Loan: ₹${farmer.totalLoan.toFixed(2)}`);
-//       doc.text(`Loan Paid Back: ₹${farmer.totalLoanPaidBack.toFixed(2)}`);
-//       doc.text(`Loan Remaining: ₹${farmer.totalLoanRemaining.toFixed(2)}`);
-//     };
-
-//     // First Page Title
-//     doc.fontSize(22).fillColor('#003366').text('All Farmers Milk Report', { align: 'center' });
-//     doc.moveDown();
-//     doc.fontSize(12).fillColor('black').text(`Generated on: ${new Date().toLocaleString()}`);
-//     doc.addPage(); // Move to a new page after the title
-
-//     // Loop over farmers and append their sections
-//     for (const farmer of farmers) {
-//       generateFarmerReport(doc, farmer);
-//     }
-
-//     doc.end();
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: 'Error generating PDF' });
-//   }
-// };
-
-
-export const downloadAllFarmersPDF = async (req, res) => {
+export const downloadAllFarmersPDFByDate = async (req, res) => {
   try {
+    const { start, end } = req.params;
     const farmers = await Farmer.find();
+
+    const startDate = new Date(start);
+    const endDate = new Date(end);
 
     if (farmers.length === 0) {
       return res.status(404).json({ message: 'No farmers found' });
@@ -582,42 +472,38 @@ export const downloadAllFarmersPDF = async (req, res) => {
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
 
+    // const PDFDocument = require('pdfkit');
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
     doc.pipe(res);
 
-    // -- Header for All Farmers Report --
+    // Header
     doc.rect(50, 40, 495, 70).fillAndStroke('#F0F8FF', '#003366');
     doc.fontSize(22).fillColor('#003366')
-        .text('ALL FARMERS MILK REPORT', 50, 55, { align: 'center' });
+      .text('ALL FARMERS MILK REPORT', 50, 55, { align: 'center' });
     doc.fontSize(12).fillColor('#003366')
-        .text(`Generated on: ${new Date().toLocaleString()}`, 50, 85, { align: 'center' });
+      .text(`Generated on: ${new Date().toLocaleString()}`, 50, 85, { align: 'center' });
 
     doc.moveDown(2);
 
-    // Helper: Create report for a single farmer with styling
     const generateStyledFarmerReport = (doc, farmer) => {
       doc.addPage();
 
-      // -- Farmer Information Box --
-      doc.roundedRect(50, doc.y, 495, 70, 5)
-          .fillAndStroke('#E6F2FF', '#003366');
+      doc.roundedRect(50, doc.y, 495, 70, 5).fillAndStroke('#E6F2FF', '#003366');
 
       const infoStartY = doc.y + 15;
       doc.fillColor('#003366').fontSize(14)
-          .text(`Farmer: ${farmer.farmerName}`, 70, infoStartY);
+        .text(`Farmer: ${farmer.farmerName}`, 70, infoStartY);
       doc.fontSize(11)
-          .text(`Mobile: ${farmer.mobileNumber}`, 70, infoStartY + 20)
-          .text(`Address: ${farmer.address}`, 300, infoStartY + 20)
-          .text(`Joining Date: ${new Date(farmer.joiningDate).toDateString()}`, 70, infoStartY + 40);
+        .text(`Mobile: ${farmer.mobileNumber}`, 70, infoStartY + 20)
+        .text(`Address: ${farmer.address}`, 300, infoStartY + 20)
+        .text(`Joining Date: ${new Date(farmer.joiningDate).toDateString()}`, 70, infoStartY + 40);
 
       doc.moveDown(4);
 
-      // Transaction Summary Header
       doc.fontSize(16).fillColor('#003366')
-          .text('TRANSACTION SUMMARY', { align: 'center', underline: true });
+        .text('TRANSACTION SUMMARY', { align: 'center', underline: true });
       doc.moveDown();
 
-      // Group transactions by time and milk type (same logic as single farmer report)
       const groupedTransactions = {
         morning: { cow: [], buffalo: [] },
         evening: { cow: [], buffalo: [] }
@@ -625,7 +511,7 @@ export const downloadAllFarmersPDF = async (req, res) => {
 
       farmer.transaction.forEach(t => {
         const timeOfDay = t.transactionTime?.toLowerCase() ||
-                            (new Date(t.transactionDate).getHours() < 12 ? 'morning' : 'evening');
+          (new Date(t.transactionDate).getHours() < 12 ? 'morning' : 'evening');
         const milkType = t.milkType.toLowerCase();
 
         if (timeOfDay === 'morning') {
@@ -637,23 +523,18 @@ export const downloadAllFarmersPDF = async (req, res) => {
         }
       });
 
-      // Table drawing function
       const drawTransactionTable = (title, transactions, startY) => {
         if (transactions.length === 0) return startY;
-
-        // Check if we need to add a new page
         if (startY > 680) {
           doc.addPage();
           startY = 50;
         }
 
-        // Title for the section
         doc.fontSize(12).fillColor('#003366')
-            .text(title, 50, startY, { underline: true });
+          .text(title, 50, startY, { underline: true });
 
         startY += 20;
 
-        // Table headers
         doc.rect(50, startY, 495, 20).fillAndStroke('#003366', '#003366');
         doc.fillColor('#FFFFFF').fontSize(10);
         doc.text('Date', 55, startY + 6);
@@ -669,18 +550,16 @@ export const downloadAllFarmersPDF = async (req, res) => {
         let totalLiters = 0;
         let totalAmount = 0;
 
-        // Table rows
         transactions.forEach((t, index) => {
-          // Alternate row coloring
+          const amount = t.milkQuantity * t.pricePerLitre;
+          totalLiters += t.milkQuantity;
+          totalAmount += amount;
+
           if (index % 2 === 0) {
             doc.rect(50, startY, 495, 20).fillAndStroke('#F8F9FA', '#CCE5FF');
           } else {
             doc.rect(50, startY, 495, 20).fillAndStroke('#FFFFFF', '#CCE5FF');
           }
-
-          const amount = t.milkQuantity * t.pricePerLitre;
-          totalLiters += t.milkQuantity;
-          totalAmount += amount;
 
           doc.fillColor('#000000').fontSize(9);
           doc.text(new Date(t.transactionDate).toLocaleDateString(), 55, startY + 6);
@@ -694,7 +573,6 @@ export const downloadAllFarmersPDF = async (req, res) => {
           startY += 20;
         });
 
-        // Total row
         doc.rect(50, startY, 495, 22).fillAndStroke('#E6F2FF', '#003366');
         doc.fillColor('#003366').fontSize(10).font('Helvetica-Bold');
         doc.text('TOTAL', 55, startY + 6);
@@ -706,38 +584,30 @@ export const downloadAllFarmersPDF = async (req, res) => {
 
       let currentY = doc.y;
 
-      // Morning Cow
       if (groupedTransactions.morning.cow.length > 0) {
         currentY = drawTransactionTable('MORNING - COW MILK', groupedTransactions.morning.cow, currentY);
       }
 
-      // Morning Buffalo
       if (groupedTransactions.morning.buffalo.length > 0) {
         currentY = drawTransactionTable('MORNING - BUFFALO MILK', groupedTransactions.morning.buffalo, currentY);
       }
 
-      // Evening Cow
       if (groupedTransactions.evening.cow.length > 0) {
         currentY = drawTransactionTable('EVENING - COW MILK', groupedTransactions.evening.cow, currentY);
       }
 
-      // Evening Buffalo
       if (groupedTransactions.evening.buffalo.length > 0) {
         currentY = drawTransactionTable('EVENING - BUFFALO MILK', groupedTransactions.evening.buffalo, currentY);
       }
 
-      // If we don't have enough space for the summary, add a new page
       if (currentY > 700) {
         doc.addPage();
         currentY = 50;
       }
 
-      // Grand Total and Summary Section
       doc.moveDown();
-      doc.roundedRect(50, currentY, 495, 120, 5)
-          .fillAndStroke('#FFF8E1', '#FF9800');
+      doc.roundedRect(50, currentY, 495, 120, 5).fillAndStroke('#FFF8E1', '#FF9800');
 
-      // Calculate grand totals for the farmer
       let grandTotalLiters = 0;
       let grandTotalAmount = 0;
 
@@ -750,58 +620,56 @@ export const downloadAllFarmersPDF = async (req, res) => {
         });
       });
 
-      // Summary title
       doc.fontSize(14).fillColor('#003366')
-          .text('FINANCIAL SUMMARY', 50, currentY + 15, { align: 'center' });
+        .text('FINANCIAL SUMMARY', 50, currentY + 15, { align: 'center' });
 
       currentY += 40;
 
       doc.fontSize(10).fillColor('#000000');
-
-      // Row 1: Milk & Loan Total
       doc.text(`Total Milk Quantity:`, 70, currentY)
-          .font('Helvetica-Bold').text(`${grandTotalLiters.toFixed(2)} liters`, 200, currentY)
-          .font('Helvetica').text('Total Loan:', 300, currentY)
-          .font('Helvetica-Bold').text(`₹${farmer.totalLoan.toFixed(2)}`, 430, currentY);
+        .font('Helvetica-Bold').text(`${grandTotalLiters.toFixed(2)} liters`, 200, currentY)
+        .font('Helvetica').text('Total Loan:', 300, currentY)
+        .font('Helvetica-Bold').text(`₹${farmer.totalLoan.toFixed(2)}`, 430, currentY);
 
       currentY += 15;
 
-      // Row 2: Loan Paid
       doc.font('Helvetica').text('Total Loan Paid Back:', 300, currentY)
-          .font('Helvetica-Bold').text(`₹${farmer.totalLoanPaidBack.toFixed(2)}`, 430, currentY);
+        .font('Helvetica-Bold').text(`₹${farmer.totalLoanPaidBack.toFixed(2)}`, 430, currentY);
 
       currentY += 15;
 
-      // Row 3: Loan Remaining
       doc.font('Helvetica').text('Loan Remaining:', 300, currentY)
-          .font('Helvetica-Bold').text(`₹${farmer.totalLoanRemaining.toFixed(2)}`, 430, currentY);
+        .font('Helvetica-Bold').text(`₹${farmer.totalLoanRemaining.toFixed(2)}`, 430, currentY);
 
       currentY += 20;
 
       doc.font('Helvetica').text(`Total Amount:`, 70, currentY)
-          .font('Helvetica-Bold').text(`₹${grandTotalAmount.toFixed(2)}`, 200, currentY);
+        .font('Helvetica-Bold').text(`₹${grandTotalAmount.toFixed(2)}`, 200, currentY);
 
-      // Add footer to the farmer's pages
       const pageCount = doc.bufferedPageRange().count;
-      const startIndex = pageCount - doc.page.index -1;
+      const startIndex = pageCount - doc.page.index - 1;
+
       for (let i = startIndex; i < pageCount; i++) {
         doc.switchToPage(i);
-
-        // Footer line
         doc.moveTo(50, 780).lineTo(545, 780).stroke('#003366');
-
-        // Footer text
         doc.fontSize(8).fillColor('#666666')
-            .text(`Milkman Management System - Report generated on ${new Date().toLocaleString()}`, 50, 790);
-
-        // Page number on the right
+          .text(`Milkman Management System - Report generated on ${new Date().toLocaleString()}`, 50, 790);
         doc.text(`Page ${i + 1}`, 450, 790);
       }
     };
 
-    // Loop over farmers and append their styled reports
     for (const farmer of farmers) {
-      generateStyledFarmerReport(doc, farmer);
+      const filteredTransactions = farmer.transaction.filter(t => {
+        const tDate = new Date(t.transactionDate);
+        return tDate >= startDate && tDate <= endDate;
+      });
+
+      const clonedFarmer = {
+        ...farmer.toObject(),
+        transaction: filteredTransactions
+      };
+
+      generateStyledFarmerReport(doc, clonedFarmer);
     }
 
     doc.end();
