@@ -11,7 +11,7 @@ import {
   generateFarmerReport
 } from "../controllers/transactionController.js";
 
-import { farmerTransaction, downloadAllFarmersPDF } from "../controllers/farmerTrasactionController.js";
+import { farmerTransaction, downloadAllFarmersPDF, downloadReportByFarmerId } from "../controllers/farmerTrasactionController.js";
 
 import {
   authenticateAdmin,
