@@ -10,6 +10,7 @@ import { io } from "../server.js";
 // Add a new category
 export const addCategory = async (req, res) => {
   try {
+    
     const { categoryName, categoryDescription} = req.body;
 
     if (!categoryName || !categoryDescription) {
@@ -19,7 +20,8 @@ export const addCategory = async (req, res) => {
     }
 
     // Check if the category already exists
-    const existingCategory = await Category.findOne({ categoryName });
+    const existingCategory = await Category.findOne({ categoryName , subAdmin : req.subAdmin._id});
+    
     if (existingCategory) {
       return res
         .status(400)
@@ -35,10 +37,10 @@ export const addCategory = async (req, res) => {
       products: [], // Initially empty
       branchId:subAdmin?.branch?.branchId,
     });
-
+    
     await newCategory.save();
     io.emit("categoryUpdated", { newCategory: newCategory});
-
+    console.log("after emission")
     res
       .status(201)
       .json(

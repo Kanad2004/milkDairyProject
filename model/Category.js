@@ -52,7 +52,6 @@ const categorySchema = new mongoose.Schema(
     categoryName: {
       type: String,
       required: true,
-      unique: true,
     },
     categoryDescription: {
       type: String,
@@ -72,6 +71,8 @@ const categorySchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+categorySchema.index({ branchId: 1, categoryName: 1 }, { unique: true });
 
 // Export the Category model
 export const Category = mongoose.model("Category", categorySchema);
