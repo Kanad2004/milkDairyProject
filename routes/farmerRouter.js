@@ -53,14 +53,14 @@ farmerRouter.patch(
 );
 
 farmerRouter.get(
-  "/combined-report-by-mobileNumber/:mobileNumber" ,
+  "/combined-report-by-mobileNumber/:farmerId/:day" ,
   authenticateSubAdmin,
   authorizeRoleSubAdmin(["subAdmin"]),
   farmerCombinedReport
 )
 
 farmerRouter.get(
-  "/combined-report-for-all-farmers" ,
+  "/combined-report-for-all-farmers/:day" ,
   authenticateSubAdmin,
   authorizeRoleSubAdmin(["subAdmin"]),
   allFarmersCombinedReport

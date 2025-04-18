@@ -6,6 +6,7 @@ import { uploadOnCloudinary } from "../utils/CloudinaryUtility.js";
 import { SubAdmin } from "../model/SubAdmin.js";
 import mongoose from "mongoose";
 import { io } from "../server.js";
+
 // Add a new category
 export const addCategory = async (req, res) => {
   try {
@@ -118,7 +119,7 @@ export const updateCategory = async (req, res) => {
 
 export const getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find().populate("subAdmin"); // Populating subAdmin details if needed
+    const categories = await Category.find({subAdmin : req.subAdmin._id}).populate("subAdmin"); // Populating subAdmin details if needed
     res
       .status(200)
       .json(

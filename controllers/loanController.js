@@ -250,9 +250,12 @@ const getDateRange = (type) => {
 // Generate loan report for all farmers
 const generateLoanReportSubAdmin = asyncHandler(async (req, res) => {
   try {
-    const { reportType } = req.query;
-    const type = reportType;
-    const { startDate, endDate } = getDateRange(type);
+    let { startDate, endDate } = req.query;
+    // const type = reportType;
+    // const { startDate, endDate } = getDateRange(type);
+    startDate = new Date("2025-04-10");
+    endDate = new Date("2025-04-20");
+    endDate.setHours(23, 59, 59, 999);
 
     let query = {
       loan: { $elemMatch: { loanDate: { $gte: startDate, $lte: endDate } } },
@@ -262,6 +265,8 @@ const generateLoanReportSubAdmin = asyncHandler(async (req, res) => {
       query.subAdmin = req.subAdmin._id;
     }
 
+    console.log("startDate: " , startDate);
+    console.log("endDate: " , endDate);
     const farmers = await Farmer.aggregate([
       { $match: query },
       {
@@ -519,7 +524,6 @@ const generateLoanReportByMobileNumber = asyncHandler(async (req, res) => {
   const workbook = new exceljs.Workbook();
   const worksheet = workbook.addWorksheet("Farmer Loans");
 
-  console.log("yes . . . ");
   // Define columns for the Excel sheet
   worksheet.columns = [
     { header: "Farmer ID", key: "farmerId", width: 20 },
@@ -553,7 +557,7 @@ const generateLoanReportByMobileNumber = asyncHandler(async (req, res) => {
   const filePath = path.join(
     process.cwd(),
     "public",
-    `loans-${mobileNumber}.xlsx`
+    `loans-${farmerId}.xlsx`
   );
 
   // Write the file and respond with download link

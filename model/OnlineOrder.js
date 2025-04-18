@@ -41,7 +41,10 @@ const onlineOrderSchema = new mongoose.Schema(
       required : true , 
     }, 
     products: [productSchema],
-
+    isOrderdPlaced : {
+      type : Boolean ,
+      default: false ,
+    }
   },
   
   {
